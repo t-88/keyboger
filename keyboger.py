@@ -1,5 +1,6 @@
 #!/usr/bin/python3
-
+import os
+import datetime
 
 def read_file(file_path):
     src = None
@@ -17,7 +18,7 @@ class TokenType:
     hashtag     = "hashtag"
     text =  "text"
     d_colon = "d_colon"
-    unordered_list   = "-"
+    unordered_list   = "unordered_list"
     colon = ":"
 
     mapped = {
@@ -42,9 +43,12 @@ class Token:
         return out
     def __str__(self):
         return self.__repr__()
-
-    
-
+class BlSetting:
+    def __init__(self):
+        self.dir_name = "tmp-" + str(datetime.datetime.now())
+    def set(self,option,value):
+        if option == "dir-name":
+            self.dir_name = value
 
 class Tokenizer:
     def __init__(self):
@@ -53,7 +57,8 @@ class Tokenizer:
 
         self.idx = 0
         self.char_idx = 0
-    
+        self.settings = BlSetting()
+
     def peek(self,far=0):
         if self.idx + far < len(self.src):
             return self.src[self.idx + far]
@@ -67,6 +72,11 @@ class Tokenizer:
             val += self.peek(curr)
             curr += 1
         return val
+    def expect(self,symb):
+        if self.peek() == symb:
+            self.idx += 1
+            return
+        assert False , f"Unexpected: in expect expected={typ} got={this.peek()}"
 
 
     def stop_at(self,stopable):
@@ -108,11 +118,13 @@ class Tokenizer:
             elif char in TokenType.mapped.keys():
                 if char == "[":
                     text = ""
-                    self.tknz.append(Token(TokenType.mapped[char]))
                     while self.idx < len(self.src) and self.peek() != "]":
                         text += self.src[self.idx]
                         self.idx += 1
-                    self.tknz.append(Token(TokenType.text,value=text))
+                    self.expect("]")
+
+                    settings = [val.strip() for val in text.split(":")]
+                    self.settings.set(settings[0], settings[1])
                 elif self.peek() == ":":
                     self.idx += 1
                     value = [self.stop_at("::")]
@@ -134,5 +146,67 @@ class Tokenizer:
 
         self.tknz.append(Token(TokenType.eof))
 
-tknzer = Tokenizer()
-tknzer.tokenize(src)
+class Transpiler:
+    def __init__(self,tknz = []):
+        self.tknzer = Tokenizer()
+        self.tknz = tknz
+        self.idx = 0
+    def create_dir(self):
+        if not os.path.exists("build/"):
+            os.mkdir("build")
+        if not os.path.exists("build/" + self.tknzer.settings.dir_name):
+            os.mkdir("build/" + self.tknzer.settings.dir_name)
+        else:
+            os.mkdir("build/" + self.tknzer.settings.dir_name +"-" + str(datetime.datetime.now()))
+    def run_transpile(self,src):
+        self.create_dir()
+        self.tknzer.tokenize(src)
+        self.tknz = self.tknzer.tknz
+        self.transpile()
+
+    def peek(self,far=0):
+        if self.idx + far < len(self.tknz):
+            return self.tknz[self.idx + far]
+        assert False , f"Out of Range: in transpiler peek idx={self.idx} far={far}"
+    def expect(self,typ):
+        if self.peek() == typ:
+            self.idx += 1
+            return
+        assert False , f"Unexpected: in transpiler expect expected={typ} got={this.peek().typ}"
+
+    def create_hX(self,priority = 1,content=""):
+        return f"<h{priority}>{content}</h{priority}>\n"
+    def create_p(self,content=""):
+        return f"<p>{content}</p>\n"
+    def create_ul(self,content=""):
+        return f"<ul>{content}</ul>\n"
+
+
+    def transpile(self):
+        self.idx = 0
+        self.src = ""
+        while self.tknz[self.idx].typ != TokenType.eof:
+            self.src += self.parse_token()
+            self.idx += 1
+        print(self.src)
+    def parse_token(self):
+        tkn =  self.peek()
+        if tkn.typ == TokenType.hashtag:
+            priority = 0
+            while self.peek().typ == TokenType.hashtag:
+                priority += 1
+                self.idx += 1
+            return self.create_hX(priority,self.peek().value)
+        elif tkn.typ == TokenType.text:
+            return self.create_p(tkn.value)
+        elif tkn.typ == TokenType.unordered_list:
+            self.idx += 1
+            return self.create_ul(self.peek().value)
+        elif tkn.typ == TokenType.d_colon:
+            # print("implment ::")
+            return ""
+        else:
+            assert False , f"Unexpected token in parse_token token: {tkn}"
+        
+transpiler =  Transpiler()
+transpiler.run_transpile(src)

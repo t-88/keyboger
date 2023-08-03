@@ -1,4 +1,5 @@
 [ show-tree: True ]
+[ dir-name: Developing_A_Bloging_Engine ]
 
 # Developing A Bloging Engine
 Well i want to write my blog, and see it online. i am sure there is better ways to do it and better apps bla bla bla, 
@@ -21,7 +22,7 @@ first i need some syntax for the bloger
 compiler gonna in python bc i am gonna need to make files and write to them, and i am not about to use node for that.
 and maybe bc i dont want to write js in python, then i have to make a js framework whitch why i picked this project, 
 but thats too advanced. lets start with generating html.
-isnt turning text from source to source called ::link::transpiling::https://en.wikipedia.org/wiki/Source-to-source_compiler mmmmm. well let change the title click on btn::me::log("ur mom")
+isnt turning text from source to source called ::link::transpiling::https://en.wikipedia.org/wiki/Source-to-source_compiler mmmmm. well let change the title click on btn::me::log("urmom")
 
 
 ## Btw
