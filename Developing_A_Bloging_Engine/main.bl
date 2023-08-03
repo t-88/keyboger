@@ -1,0 +1,29 @@
+[ show-tree: True ]
+
+# Developing A Bloging Engine
+Well i want to write my blog, and see it online. i am sure there is better ways to do it and better apps bla bla bla, 
+it seems intersting how i would love to solve this problem.
+
+## ToDo
+-   syntax
+-   animation
+-   compiler
+-   word replacement: bc => because, smth => somthingh 
+
+## Syntax
+first i need some syntax for the bloger
+-   '#' for headers stole it from ::link::markdown::https://en.wikipedia.org/wiki/Markdown
+-   'type::arg1::arg2::...' smthing for links and imgs and stuff.
+-   '-' for un-ordered lists.
+-   '[...]' for blog website setting, i think, or meta code smth like c macros whatever that means.
+
+## Compiler
+compiler gonna in python bc i am gonna need to make files and write to them, and i am not about to use node for that.
+and maybe bc i dont want to write js in python, then i have to make a js framework whitch why i picked this project, 
+but thats too advanced. lets start with generating html.
+isnt turning text from source to source called ::link::transpiling::https://en.wikipedia.org/wiki/Source-to-source_compiler mmmmm. well let change the title click on btn::me::log("ur mom")
+
+
+## Btw
+i dont know what i am talking about, dont take me seriously.
+and dont worry about the bad english i will fix it :).
