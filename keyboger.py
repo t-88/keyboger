@@ -30,6 +30,8 @@ class TokenType:
     }
 
 skipable = ['\n',' ','\t']
+STRING_CHARS =  ["'",'"']
+
     
 class Token:
     def __init__(self,typ,value=""):
@@ -96,6 +98,18 @@ class Tokenizer:
         
         return text
 
+    def get(self):
+        char = self.peek()
+        self.idx += 1
+        return char
+    
+    def extract_str(self,str_char):
+        text = str_char
+        while self.idx < len(self.src) and self.peek() != str_char:
+            text += self.get()
+        text += self.get()
+        return text
+
     def tokenize(self,src):
         self.src = src
         self.tknz = []
@@ -105,17 +119,7 @@ class Tokenizer:
         while self.idx < len(self.src):
             char = self.src[self.idx] 
             self.idx += 1
-            if char in ["'",'"']:
-                text = char
-                while self.idx < len(self.src) and self.src[self.idx] !=  char:
-                    text += self.src[self.idx]
-                    self.idx += 1
-                text += char
-                self.idx += 1
-
-                self.tknz.append(Token(TokenType.text,value=text))
-
-            elif char in TokenType.mapped.keys():
+            if char in TokenType.mapped.keys():
                 if char == "[":
                     text = ""
                     while self.idx < len(self.src) and self.peek() != "]":
@@ -136,11 +140,18 @@ class Tokenizer:
                     self.tknz.append(Token(TokenType.mapped[char]))
             elif char in  skipable: pass
             else:
-
-                text = char
+                text = ""
+                if char in STRING_CHARS:
+                    text += self.extract_str(char)
+                else:
+                    text += char
                 while self.idx < len(self.src) and self.peek() != "\n" and self.peek_str(2) != "::":
-                    text += self.src[self.idx]
-                    self.idx += 1
+                    if self.peek() in STRING_CHARS: 
+                        print('     ',text)
+                        text += self.extract_str(self.get())
+                    else:
+                        text += self.peek()
+                        self.idx += 1
                 self.tknz.append(Token(TokenType.text,value=text))
 
 
@@ -191,22 +202,24 @@ class Transpiler:
         print(self.src)
     def parse_token(self):
         tkn =  self.peek()
-        if tkn.typ == TokenType.hashtag:
+        if tkn.typ == TokenType.text:
+            return self.create_p(tkn.value)
+        elif tkn.typ == TokenType.hashtag:
             priority = 0
             while self.peek().typ == TokenType.hashtag:
                 priority += 1
                 self.idx += 1
             return self.create_hX(priority,self.peek().value)
-        elif tkn.typ == TokenType.text:
-            return self.create_p(tkn.value)
         elif tkn.typ == TokenType.unordered_list:
             self.idx += 1
-            return self.create_ul(self.peek().value)
+            return self.create_ul(self.parse_token())
         elif tkn.typ == TokenType.d_colon:
-            # print("implment ::")
             return ""
         else:
             assert False , f"Unexpected token in parse_token token: {tkn}"
         
+
 transpiler =  Transpiler()
 transpiler.run_transpile(src)
+# for tkn in transpiler.tknz:
+    # print(tkn) 
