@@ -115,7 +115,6 @@ class Tokenizer:
         self.tknz = []
         self.idx = 0
         
-        
         while self.idx < len(self.src):
             char = self.src[self.idx] 
             self.idx += 1
@@ -147,14 +146,11 @@ class Tokenizer:
                     text += char
                 while self.idx < len(self.src) and self.peek() != "\n" and self.peek_str(2) != "::":
                     if self.peek() in STRING_CHARS: 
-                        print('     ',text)
                         text += self.extract_str(self.get())
                     else:
                         text += self.peek()
                         self.idx += 1
                 self.tknz.append(Token(TokenType.text,value=text))
-
-
         self.tknz.append(Token(TokenType.eof))
 
 class Transpiler:

@@ -7,3 +7,18 @@ i need a place where to put blogs, so i am making a bloging website but i want t
 ```
 # Imgs
 ![first blog](./dev-imgs/looks_like_blog_to_me.png)
+
+## ToDo
+-   syntax
+-   compiler
+-   animation
+-   word replacement: bc => because, smth => somthingh 
+
+## Syntax
+first i need some syntax for the bloger
+-   '#' for headers stole it from [markdown](https://en.wikipedia.org/wiki/Markdown)
+-   'type::arg1::arg2::...' smthing for links and imgs and stuff.
+-   '-' for un-ordered lists.
+-   '[...]' marco, for config  
+
+
