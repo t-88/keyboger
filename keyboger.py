@@ -166,7 +166,7 @@ class Transpiler:
         else:
             os.mkdir("build/" + self.tknzer.settings.dir_name +"-" + str(datetime.datetime.now()))
     def run_transpile(self,src):
-        self.create_dir()
+        # self.create_dir()
         self.tknzer.tokenize(src)
         self.tknz = self.tknzer.tknz
         self.transpile()

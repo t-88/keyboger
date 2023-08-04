@@ -1,0 +1,10 @@
+<bloger>
+    <h1>hello {{var:val}} </h1>
+</bloger>
+
+<script>
+    let val = 10;
+</script>
+
+<style>
+</style> 
