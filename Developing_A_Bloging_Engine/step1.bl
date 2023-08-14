@@ -1,0 +1,18 @@
+[show-tree: True ]
+[dir-name: Developing_A_Bloging_Engine ]
+[link : markdown : https://en.wikipedia.org/wiki/Markdown]
+[link : tokenization : https://en.wikipedia.org/wiki/Lexical_analysis#Tokenization]
+
+# Developing A Bloging Engine
+Hello there, i never made a blog so frogive me if i fucked it up or smth, anyway i decided to start bloging to record my journey and give back to the internet.
+so to start it, i wanted to my my own bloging framewrok? compiler/transpiler? engine?. so enjoy the ride i think.
+
+## Step1: Syntax
+we need to set our language syntax before we even start, this why i am writing a blog about a bloging engine, i am gonna use the cur source and turn it to a blog,
+this lang is inspired by :[link::markdown]:.
+-   '-' un-ordered list notation.
+-   '#' for section and headers.
+-   '::type::arg1::arg2::...' for links, imgs, events, etc.
+-   '[var:value]' macros to configure the document.
+-   '```' for code blocks
+i think thats good enough as a start
