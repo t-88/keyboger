@@ -1,72 +1,7 @@
 
 
-## Step2: Tokenizing
-::link::tokenization to my understanding is taking a text file and converting it to a list of tokens to make easier to parse that file down the road,
-example:
-    our text file:      "= 1 + 2"
-    output of tokenizer: [(equal),(number,1),(operation,+),(number,2)]
-so, to tokenzing our file gonna be simple i think.
-we gonna create a tokenizer class all its does is to loop throught every char in our source file, ignores spaces and newlines and 
-checks if that char is reserved, reserved chars are '[',']','#','-','```'.'::'. its pretty stright forward.
-and about macros, they are for configuration so they talk directly to the transpiler, they are hidden and wont show up in the blog
-for now at least we gonna skip over macros until we have smthing solid
 
-an example of it running on this src file:
-src file:
-```
-    [dir-name : Text_Blog]
-    # Header1
-    -   hello from somewhere this is '#' a hashtag
-    -   looks like i am living in a list
-    maybe check this link ::link::https://www.youtube.com/
-    ```
-        code block??
-    ```
-``` 
-our tokenizer gives:
-    <Token type=hashtag>
-    <Token type=text value=Header1>
-    <Token type=unordered_list>
-    <Token type=text value=hello from somewhere this is '#' a hashtag>
-    <Token type=unordered_list>
-    <Token type=text value=looks like i am living in a list>
-    <Token type=text value=maybe check this link >
-    <Token type=d_colon value=['link', 'https://www.youtube.com/']>
-    <Token type=text value=```>
-    <Token type=text value=code block??>
-    <Token type=text value=```>
-    <Token type=eof>
-pretty cool isnt it
 
-## Step3: Transpiling
-after we got our tokens, transpiling is simple all we have to do is to pass through every token and append html to our output file
-here is the basic idea
-```
-    def create_h(priority,content):
-        return f"<h{priority}>{content}</h{priority}>"
-    def create_p(content):
-        return f"<p>{content}</p>"
-    def create_ol(content):
-        return f"<ol>{content}</ol>"
-    
-    output = ""
-    index = 0
-    while index < len(tkns): 
-        if tkns[i].typ == text:
-            i+=1 
-            output += create_p(tkn[i].value)
-            i+=1
-        elif tkns[i].typ == hashtag:
-            priority = 0 # we count the number if coming '#' to get the priority
-            while tkns[i].typ == hashtag:
-                i+=1
-            output += create_h(priority,tkn[i].value)
-            i+=1
-        elif tkns[i].typ == unordered_list:
-            i+=1
-            output += create_ol(tkn[i].value)
-            i+=1
-```
 as u can see we use a while loop to control the cur token we are parsing,
 in headers we count how many hashtags there is to get the type of header same way markdown does it,
 its just a basic idea, the full implmentation should be recusive, think about it what if we have as ol element a code block or header it will be treated as text so better

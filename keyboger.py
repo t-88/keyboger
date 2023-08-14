@@ -9,7 +9,7 @@ def read_file(file_path):
     assert src != None , "read_file: cant read file for some reason"
     return src
 
-src = read_file("Developing_A_Bloging_Engine/step1.bl")
+
 
 class TokenType:
     eof = 0
@@ -19,6 +19,8 @@ class TokenType:
     unordered_list   = 6
     macro = 7
     header = 8
+    code = 9
+    inline_code = 10
 
     mapped = {
         "#":"hashtag",
@@ -30,6 +32,20 @@ skipable = [' ','\t']
 STRING_CHARS =  ["'",'"']
 
     
+def html_temlplate(src):
+    return f"""<html>
+    <head> <link rel="stylesheet" href="style.css"> </head>
+    <body>
+        <header> </header>
+        <div id="blog">
+            <section id="content">
+            {src}
+            </section>
+        </div>
+    </body>
+    <script src="main.js"> </script>
+</html>"""
+
 class Token:
     def __init__(self,typ,value="",pos =(-1 , -1)):
         self.typ = typ
@@ -71,47 +87,22 @@ class Tokenizer:
         self.char_idx = 0
         self.settings = BlSetting()
 
-    def peek(self,far=0):
-        if self.idx + far < len(self.src):
-            return self.src[self.idx + far]
-        assert False , f"Out of Range: in peek idx={self.idx} far={far}"
-    def peek_str(self,far=0):
-        if self.idx + far >= len(self.src):
+
+        self.lsrc = []
+        self.line = ""
+    def peek(self,idx,src,far=0):
+        if idx + far < len(src):
+            return src[idx + far]
+        assert False , f"Out of Range: in peek idx={idx} far={far}"
+    def peek_str(self,idx,src,far=0):
+        if idx + far >= len(src):
             return "" 
         val = ""
         curr = 0
         while curr < far:
-            val += self.peek(curr)
+            val += self.peek(idx,src,curr)
             curr += 1
         return val
-    def expect(self,symb):
-        if self.peek() == symb:
-            self.idx += 1
-            return
-        assert False , f"Unexpected: in expect expected={typ} got={this.peek()}"
-
-
-    def stop_at(self,stopable):
-        text = ""
-        if type(stopable) == list:
-            #TODO: maybe change this
-            while True:
-                for elem in stopable:
-                    if self.peek_str(len(elem)) == elem:
-                        return text
-                text += self.src[self.idx]
-                self.idx += 1
-        else:
-            while self.peek_str(len(stopable)) != stopable:
-                text += self.src[self.idx]
-                self.idx += 1 
-        
-        return text
-
-    def get(self):
-        char = self.peek()
-        self.idx += 1
-        return char
     
     def extract_str(self,str_char):
         text = str_char
@@ -123,62 +114,109 @@ class Tokenizer:
     def append_token(self,typ,val=None,pos=None):
         self.tknz.append(Token(typ,val,pos))
 
+
+
+    def tokenize_code_blk(self,typ=TokenType.code,inline = False):
+        self.col += 3
+        
+        text = "```"
+        done = False
+        first_new_line = True
+        while not done and self.row < len(self.lsrc):
+            while self.col < len(self.line):
+                if self.line[self.col] == "\\":
+                    text += self.line[self.col + 1]
+                    self.col += 2
+                elif self.peek_str(self.col,self.line + " ",3) == "```":
+                    text += "```"
+                    done = True
+                    self.col += 2
+                    break
+                text += self.line[self.col]
+                self.col += 1
+            if self.col == len(self.line):
+                self.col = 0
+                self.row += 1
+                self.line = self.lsrc[self.row]
+
+                if first_new_line:
+                    first_new_line = False
+                else:
+                    text += "\n" 
+        if not inline:
+            self.append_token(typ,text,(self.row,self.col))        
+        else:
+            return Token(typ,text)
     def tokenize(self,src):
         self.src = src
         self.lsrc = self.src.split("\n")
         self.tknz = []
-        self.idx = 0
 
 
-        row = 0
-        while row < len(self.lsrc):
+        self.row = 0
+        while self.row < len(self.lsrc):
 
-            col = 0
-            line = self.lsrc[row]
+            self.col = 0
+            self.line = self.lsrc[self.row]
 
             is_first_char = True
-            while col < len(line):
-                char = line[col]
+            while self.col < len(self.line):
+                char = self.line[self.col]
                 nomral_text = False
 
 
                 if char in skipable:
-                    col += 1
+                    self.col += 1
                     continue
                 if is_first_char:
                     correct = True
                     is_first_char = False
                     if char == "[":
-                        correct = line.strip()[-1] == "]"  
+                        correct = self.line.strip()[-1] == "]"  
                         if correct:
-                            self.append_token(TokenType.macro,line[col:],(row,col))
+                            self.append_token(TokenType.macro,self.line[self.col:],(self.row,self.col))
                     elif char == "#":
-                        while col < len(line) and line[col] == "#":
-                            col += 1
-                        if col >= len(line):
+                        while self.col < len(self.line) and self.line[self.col] == "#":
+                            self.col += 1
+                        if self.col >= len(self.line):
                             correct = False
                         if correct:
-                            self.append_token(TokenType.header,line,(row,col))
+                            self.append_token(TokenType.header,self.line,(self.row,self.col))
                         else:
                             nomral_text = True
                     elif char == "-":
-                        correct = col + 1 < len(line) and line[col + 1] == " "
+                        correct = self.col + 1 < len(self.line) and self.line[self.col + 1] == " "
                         if correct:
-                            self.append_token(TokenType.unordered_list,line,(row,col))
+                            self.append_token(TokenType.unordered_list,self.line,(self.row,self.col))
+                    elif char == "`":
+                        correct = self.peek_str(self.col,self.line + " ",3) == "```"
+                        if correct:
+                            self.tokenize_code_blk()
                     else:
                         correct = False
                     
                     nomral_text = not correct
                 if nomral_text: 
-                    col += 1
+                    self.col += 1
                     text = char
-                    while col < len(line):
-                        text  += line[col]
-                        col += 1
-                    self.append_token(TokenType.text,text,(row,col))
 
-                col += 1
-            row += 1
+                    inline_tkns = []
+                    while self.col < len(self.line):
+                        if self.line[self.col] == "\\":
+                            assert self.col + 1 < len(self.line) , "[Error] tokenization list out of range in escape char" 
+                            text  += self.line[self.col + 1]
+                            self.col += 1
+                        elif self.line[self.col] == "`" and self.peek_str(self.col,self.line + " ",3) == "```":
+                            inline_tkns.append(self.tokenize_code_blk(TokenType.inline_code,True))
+                            text += ":[@]:"
+                        else:
+                            text  += self.line[self.col]
+                        self.col += 1
+                    self.append_token(TokenType.text,text,(self.row,self.col))
+                    self.tknz += inline_tkns
+
+                self.col += 1
+            self.row += 1
 
         self.append_token(TokenType.eof)
 
@@ -196,12 +234,12 @@ class Transpiler:
         else:
             os.mkdir("build/" + self.tknzer.settings.dir_name +"-" + str(datetime.datetime.now()))
     def run_transpile(self,src):
-        # self.create_dir()
         self.tknzer.tokenize(src)
         self.tknz = self.tknzer.tknz
         self.transpile()
-        print(self.src)
-
+    def save(self,file_path):
+        with open(file_path,"w") as f:
+            f.write(html_temlplate(self.src))
     def peek(self,far=0):
         if self.idx + far < len(self.tknz):
             return self.tknz[self.idx + far]
@@ -217,11 +255,21 @@ class Transpiler:
     def create_p(self,content=""):
         return f"<p>{content}</p>\n"
     def create_ul(self,content=""):
-        return f"<ul>{content}</ul>\n"
-    
+        return f"<ul><li>{content}</li></ul>\n"
     def create_a(self,key,link):
         return f"<a href='{link}'>{key}</a>\n"
+    def create_code_blk(self,class_name,code):
+        code = code.replace("\n","<br>").replace(" ","&nbsp;")
+        tag = "div"
+        if class_name == "inline-code-blk":
+            tag = "span"
 
+        return f"""
+        <{tag} class="{class_name}">
+            {code}
+        </{tag}>
+        """
+            
 
     def transpile(self):
         self.idx = 0
@@ -244,6 +292,8 @@ class Transpiler:
             return self.create_ul(self.parse_ul(tkn.value))
         elif tkn.typ == TokenType.text:
             return self.create_p(self.parse_text(tkn.value))
+        elif tkn.typ == TokenType.code:
+            return self.create_code_blk("code-blk",tkn.value[3:-3])
         else:
             assert False , f"Unexpected token in parse_token token: {tkn}"
         
@@ -265,17 +315,24 @@ class Transpiler:
             normal_text = True
 
             if char == ":" and idx < len(src) and src[idx] == "[":
-                correct , code , ahead = self.parse_text_macro(src[idx:])
-                normal_text = not correct
-                if correct:
-                    content += code
-                    idx += ahead
+                if src[idx + 1] == "@":
+                    idx += 4
+                    self.idx += 1
+                    content += self.create_code_blk("inline-code-blk",self.tknz[self.idx].value[3:-3])
+                    normal_text = False
+                else:
+                    correct , code , ahead = self.parse_text_macro(src[idx:])
+                    normal_text = not correct
+                    if correct:
+                        content += code
+                        idx += ahead
             if normal_text:
                 if char == "\\":
                     content += src[idx]
                     idx += 1
                 else:
                     content += char  
+
         return content
     def parse_text_macro(self,line):
         macro = ""
@@ -301,5 +358,12 @@ class Transpiler:
         code = line.split(" : ")
         self.bl_setting.set(code[0],code[1:])
 
+
+src = read_file("Developing_A_Bloging_Engine/step1.bl")
+src = src.replace("<","&lt;")
+src = src.replace(">","&gt;")
+
+
 transpiler =  Transpiler()
 transpiler.run_transpile(src)
+transpiler.save("build/index.html")

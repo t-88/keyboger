@@ -12,7 +12,87 @@ we need to set our language syntax before we even start, this why i am writing a
 this lang is inspired by :[link::markdown]:.
 -   '-' un-ordered list notation.
 -   '#' for section and headers.
--   '::type::arg1::arg2::...' for links, imgs, events, etc.
+-   ':[type::arg1::arg2::...]:' for links, imgs, events, etc.
 -   '[var:value]' macros to configure the document.
 -   '```' for code blocks
 i think thats good enough as a start
+
+
+
+## Step2: Tokenizing
+:[link::tokenization]: to my understanding is taking a text file and converting it to a list of tokens to make easier to parse that file down the road,
+example:
+    our text file:      "= 1 + 2"
+    output of tokenizer: [(equal),(number,1),(operation,+),(number,2)]
+so, to tokenzing our file gonna be simple i think.
+we gonna create a tokenizer class all its does is to loop throught every char in our source file, ignores spaces and newlines and 
+checks if that char is reserved, reserved chars are '[',']','#','-','\```'.'::'. its pretty stright forward.
+and about macros, they are for configuration so they talk directly to the transpiler, they are hidden and wont show up in the blog
+for now at least we gonna skip over macros until we have smthing solid
+
+
+an example of it running on this src file:
+src file:
+```
+    [dir-name : Text_Blog]
+    # Header1
+    -   hello from somewhere this is '#' a hashtag
+    -   looks like i am living in a list
+    maybe check this link :[link::https://www.youtube.com/]:
+    \```
+        code block??
+    \```
+``` 
+our tokenizer gives:
+```
+    <Token type=hashtag>
+    <Token type=text value=Header1>
+    <Token type=unordered_list>
+    <Token type=text value=hello from somewhere this is '#' a hashtag>
+    <Token type=unordered_list>
+    <Token type=text value=looks like i am living in a list>
+    <Token type=text value=maybe check this link >
+    <Token type=d_colon value=['link', 'https://www.youtube.com/']>
+    <Token type=text value=\```>
+    <Token type=text value=code block??>
+    <Token type=text value=\```>
+    <Token type=eof>
+```
+pretty cool isnt it
+
+
+## Step3: Transpiling
+after we got our tokens, transpiling is simple all we have to do is to pass through every token and append html to our output file
+here is the basic idea
+
+
+we have some src string that contains html and we get ```<Token type=text value=looks like i am living in a list>```, we check type of token then we append ```<p>looks like i am living in a list<\p>``` to our src file.
+```
+    def create_p(content):
+        return f"<p>{content}</p>"
+    src = ""
+    # go through every token
+    for token in tokens:
+        if token.type == TokenType.text:
+            src += create_p(token.value)
+```
+
+
+as u can see we use a while loop to control the cur token we are parsing,
+in headers we count how many hashtags there is to get the type of header same way markdown does it,
+its just a basic idea, the full implmentation should be recusive, think about it what if we have as ol element a code block or header it will be treated as text so better
+make it recusive to handle cases like that
+
+## Step4: Building Html
+a simple solution to getting a website is to just copy the output of transpiler to index.html and done,
+but here comes time to add ur magic styles and better html tags and more sugar for the language...
+
+looks like i got my self a good src file, if everything went good u will be reading a blog from my website [page : website0.1 : website0.1]
+check out the first version of the website :[page::website0.1]:, its filled with bugs lets start the real work now
+
+
+## Btw
+plz dont take me seriously, i dont know what i am talking about.
+and dont worry about the bad english i will fix it :).
+
+

@@ -1,0 +1,47 @@
+html , body {
+    background-color: #000000;
+    color: #FFFFFF;
+    font-size: 24px;
+    overflow-x: hidden;
+    padding: 10px;
+}
+#blog {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+#content {
+    width: 40%;
+    min-width: 500px;
+}
+
+header {
+    width: 100%;
+    height: 100px;
+}
+ul::before {
+    list-style-type: disc;
+}
+h1, h2, h3 , h4, h5 , h6 {
+    text-decoration: underline;
+}
+
+a {
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+}
+.code-blk {
+    background-color: #181818;
+    padding: 20px;
+    border-radius: 10px;
+    font-size: 25px;
+    line-height: 1.5;
+} 
+.inline-code-blk {
+    background: #181818;
+    padding: 5px;
+    border-radius: 5px;
+    margin: 5px;
+    line-height: 2;
+}
