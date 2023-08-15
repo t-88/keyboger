@@ -22,6 +22,7 @@ class TokenType:
     header = 8
     code = 9
     inline_code = 10
+    ordered_list = 11
 
     mapped = {
         "#":"hashtag",
@@ -191,6 +192,61 @@ class Tokenizer:
             self.append_token(typ,text,(self.row,self.col))        
         else:
             return Token(typ,text)
+    def tokenize_ordered_list(self,char):
+        correct = False
+        # used for list numbers and letters
+        ident = ""
+
+        if char == ".":
+            correct = self.line[self.col + 1] == " "
+            self.col += 1
+        else:
+            while self.col < len(self.line) and self.line[self.col] != " " and self.line[self.col] != ".":
+                self.col += 1
+            # check if next ordered list syntax is correct 
+            # check if we are sill in the same line, we stoped at a "." and next char is space
+            # ordered list synatx [number| letter]. *
+
+            correct = self.col < len(self.line) and self.line[self.col] == "." and self.col + 1 < len(self.line) and self.line[self.col + 1] == " "
+        if correct:
+            # either a iden or nothing
+            # its the start values of the list
+            ident = self.line[:self.col]
+            self.line = self.line[self.col + 1:].strip()
+            
+            # space count is used to know nested lists
+            # a tab is one lvl aka 4 spaces 
+            pr  = ident.count(" ") // 4
+
+            # remove useless spaces
+            ident = ident.strip()
+
+            # type of ordered list letters or numbers
+            typ = "1" if ident != "." else ""
+            if ident.isalpha():
+                typ = "A" if ident.isupper() else "a" 
+
+            # if we start with alpha char 
+            # we need to calculate its start pos
+            start = "" if ident == "." else ident
+
+            if typ != "1" and ident != ".":
+                ident = ident.lower()
+
+                # final start value
+                start = 0
+                # counts how many letters
+                counter = 0
+                for char in ident[::-1]:
+                    diff = ord(char) - ord('a') + 1
+                    start +=  diff * 26 ** counter
+
+                    counter += 1
+
+
+            self.append_token(TokenType.ordered_list,self.line,mdata={"start":start,"pr" : pr,"typ": typ})
+        
+        return correct
     def tokenize(self,src):
         self.src = src
         self.lsrc = self.src.split("\n")
@@ -231,6 +287,7 @@ class Tokenizer:
                     elif char == "-":
                         pr = 0
                         correct = False
+                        list_iden  = ""
                         while self.col < len(self.line) and self.line[self.col] == "-":
                             pr += 1
                             self.col += 1
@@ -243,9 +300,11 @@ class Tokenizer:
                         correct = self.peek_str(self.col,self.line + " ",3) == "```"
                         if correct:
                             self.tokenize_code_blk()
+                    elif char == "." or str(char).isalnum():
+                        correct = self.tokenize_ordered_list(char)
+
                     else:
-                        correct = False
-                    
+                        correct = False 
                     nomral_text = not correct
                 if nomral_text: 
                     self.col += 1
@@ -367,6 +426,18 @@ class Transpiler:
             self.list_content = ""
             self.parse_lists(lists)
             return self.list_content
+        elif tkn.typ == TokenType.ordered_list:
+            #TODO: same code as TokenType.unordered_list merge
+            lists = []
+            while self.peek().typ == TokenType.ordered_list:
+                lists.append(self.peek())
+                self.idx += 1
+            self.idx -= 1
+            self.list_idx = 0
+            self.list_content = ""
+            self.parse_ordered(lists)
+            print(self.list_content)
+            return self.list_content
         elif tkn.typ == TokenType.text:
             return self.create_p(self.parse_text(tkn.value))
         elif tkn.typ == TokenType.code:
@@ -461,31 +532,74 @@ class Transpiler:
             value = self.bl_setting.get(macro[0],macro[1])
             code = self.create_a(macro[1],value)
         elif macro[0] == "color":
+            #TODO: fix color macro some text gets deleted
             # Color Synatx
             # Color: #FFFFFF : text
             code = self.create_span(macro[2],f"style='color : {macro[1]}'")
+        
         return correct , code , idx
     def parse_setting_macro(self,line):
         line = line[1:-1].strip()
         code = line.split(" : ")
         self.bl_setting.set(code[0],code[1:])
-
     def parse_lists(self,lists,depth = 0):
-        if self.list_idx >= len(lists):
-            return 
 
-        tkn = lists[self.list_idx]
-        if tkn.mdata["pr"] == depth:
-            self.list_content += f"<li>{tkn.value.strip()[tkn.mdata['pr']:]}</li>\n"
-            self.list_idx += 1
-            self.parse_lists(lists,depth)
-            self.parse_lists(lists,depth)
-        if tkn.mdata["pr"] > depth:
-            self.list_content += "<ul>\n"
-            self.parse_lists(lists,depth + 1)
-            self.list_content += "</ul>\n"
+        while self.list_idx < len(lists):
+            tkn = lists[self.list_idx]
+
+            if lists[self.list_idx].mdata["pr"] != depth:
+                # we check if we are in upper or lower lvl
+                # and deal with it accordingly
+                if lists[self.list_idx].mdata["pr"] > depth:
+                    # next lvl behavior
+                    self.list_content += "<ul>\n"
+                    self.parse_lists(lists,depth + 1)
+                    self.list_content += "</ul>\n"
+                else:
+                    # we let prev lvl deal with it 
+                    return 
+            else:            
+                # default behavior when on same lvl
+                self.list_content += f"<li>{tkn.value.strip()[tkn.mdata['pr']:]}</li>\n"
+                self.list_idx += 1
 
 
+    def parse_ordered(self,lists,depth = -1,typ = "1"):
+        # watch for the end of the list
+        # if we are in the same lvl we consume
+        while self.list_idx < len(lists):
+            tkn = lists[self.list_idx]
+
+            if lists[self.list_idx].mdata["pr"] != depth:
+                
+                # we check if we are in upper or lower lvl
+                # and deal with it accordingly
+                if lists[self.list_idx].mdata["pr"] > depth:
+                    # next lvl behavior
+                    self.list_content += f"<ol type={tkn.mdata['typ']} start={tkn.mdata['start']}>\n"
+                    self.parse_ordered(lists,depth + 1, tkn.mdata["typ"])
+                    self.list_content += "</ol>\n"
+                else:
+                    # let prev lvl deal with it
+                    return 
+
+
+            elif typ != tkn.mdata["typ"] and tkn.mdata["typ"] != "":
+
+                # if ol type changes i deal with it 
+                # typ == "" means use default
+                self.list_content += "</ol>\n"
+                self.list_content += f"<ol type='{tkn.mdata['typ']}' start={tkn.mdata['start']}>\n"
+                self.parse_ordered(lists,depth, tkn.mdata["typ"])
+            
+            else:            
+                # default behavior when on same lvl
+                self.list_content += f"<li>{tkn.value}</li>\n"
+                self.list_idx += 1
+
+
+
+        
 
 dir_path = "syntax-preview"
 

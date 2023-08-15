@@ -37,9 +37,16 @@ or local imgs :[img::ok-icon]:
 1. This is one
 .  u give the first char and the list takes care of the rest
 .  inner lists too
-    1. smthing like this
-    I. list
+    15. smthing like this
+    16. no like this
+    . auto
     A. cant say anything
+        BBV. ?
+        . ?
+        . ?
+        . ?
+        . ?
+        . ?
     .  wherever happens
 
 
