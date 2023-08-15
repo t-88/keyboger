@@ -36,7 +36,12 @@ def html_temlplate(src):
     return f"""<html>
     <head> <link rel="stylesheet" href="style.css"> </head>
     <body>
-        <header> </header>
+        <header> 
+            <img src="pic.png" alt="profile-pic" id="img">
+            <a href="">Main-Menu</a>
+            <a href="">Github</a>
+            <a href="">About</a>
+        </header>
         <div id="blog">
             <section id="content">
             {src}
@@ -259,10 +264,18 @@ class Transpiler:
     def create_a(self,key,link):
         return f"<a href='{link}'>{key}</a>\n"
     def create_code_blk(self,class_name,code):
-        code = code.replace("\n","<br>").replace(" ","&nbsp;")
+        lines =  code.replace(" ","&nbsp;").split("\n")
+        code = ""
+        for i in range(len(lines)):
+            code += "<span>" + lines[i] + "</span>"
+            if i != len(lines) - 1:
+                code += "<br>"
+
         tag = "div"
         if class_name == "inline-code-blk":
             tag = "span"
+
+
 
         return f"""
         <{tag} class="{class_name}">
@@ -359,7 +372,7 @@ class Transpiler:
         self.bl_setting.set(code[0],code[1:])
 
 
-src = read_file("Developing_A_Bloging_Engine/step1.bl")
+src = read_file("Developing_A_Bloging_Engine/main.bl")
 src = src.replace("<","&lt;")
 src = src.replace(">","&gt;")
 

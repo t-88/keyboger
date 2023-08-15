@@ -1,7 +1,12 @@
 <html>
     <head> <link rel="stylesheet" href="style.css"> </head>
     <body>
-        <header> </header>
+        <header> 
+            <img src="pic.png" alt="profile-pic" id="img">
+            <a href="">Main-Menu</a>
+            <a href="">Github</a>
+            <a href="">About</a>
+        </header>
         <div id="blog">
             <section id="content">
             <h1> Developing A Bloging Engine</h1>
@@ -32,12 +37,12 @@
 <p>src file:</p>
 
         <div class="code-blk">
-            &nbsp;&nbsp;&nbsp;&nbsp;[dir-name&nbsp;:&nbsp;Text_Blog]<br>&nbsp;&nbsp;&nbsp;&nbsp;#&nbsp;Header1<br>&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;hello&nbsp;from&nbsp;somewhere&nbsp;this&nbsp;is&nbsp;'#'&nbsp;a&nbsp;hashtag<br>&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;looks&nbsp;like&nbsp;i&nbsp;am&nbsp;living&nbsp;in&nbsp;a&nbsp;list<br>&nbsp;&nbsp;&nbsp;&nbsp;maybe&nbsp;check&nbsp;this&nbsp;link&nbsp;:[link::https://www.youtube.com/]:<br>&nbsp;&nbsp;&nbsp;&nbsp;```<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;code&nbsp;block??<br>&nbsp;&nbsp;&nbsp;&nbsp;```<br>
+            <span>&nbsp;&nbsp;&nbsp;&nbsp;[dir-name&nbsp;:&nbsp;Text_Blog]</span><br><span>&nbsp;&nbsp;&nbsp;&nbsp;#&nbsp;Header1</span><br><span>&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;hello&nbsp;from&nbsp;somewhere&nbsp;this&nbsp;is&nbsp;'#'&nbsp;a&nbsp;hashtag</span><br><span>&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;looks&nbsp;like&nbsp;i&nbsp;am&nbsp;living&nbsp;in&nbsp;a&nbsp;list</span><br><span>&nbsp;&nbsp;&nbsp;&nbsp;maybe&nbsp;check&nbsp;this&nbsp;link&nbsp;:[link::https://www.youtube.com/]:</span><br><span>&nbsp;&nbsp;&nbsp;&nbsp;```</span><br><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;code&nbsp;block??</span><br><span>&nbsp;&nbsp;&nbsp;&nbsp;```</span><br><span></span>
         </div>
         <p>our tokenizer gives:</p>
 
         <div class="code-blk">
-            &nbsp;&nbsp;&nbsp;&nbsp;&lt;Token&nbsp;type=hashtag&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Token&nbsp;type=text&nbsp;value=Header1&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Token&nbsp;type=unordered_list&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Token&nbsp;type=text&nbsp;value=hello&nbsp;from&nbsp;somewhere&nbsp;this&nbsp;is&nbsp;'#'&nbsp;a&nbsp;hashtag&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Token&nbsp;type=unordered_list&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Token&nbsp;type=text&nbsp;value=looks&nbsp;like&nbsp;i&nbsp;am&nbsp;living&nbsp;in&nbsp;a&nbsp;list&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Token&nbsp;type=text&nbsp;value=maybe&nbsp;check&nbsp;this&nbsp;link&nbsp;&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Token&nbsp;type=d_colon&nbsp;value=['link',&nbsp;'https://www.youtube.com/']&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Token&nbsp;type=text&nbsp;value=```&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Token&nbsp;type=text&nbsp;value=code&nbsp;block??&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Token&nbsp;type=text&nbsp;value=```&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Token&nbsp;type=eof&gt;<br>
+            <span>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Token&nbsp;type=hashtag&gt;</span><br><span>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Token&nbsp;type=text&nbsp;value=Header1&gt;</span><br><span>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Token&nbsp;type=unordered_list&gt;</span><br><span>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Token&nbsp;type=text&nbsp;value=hello&nbsp;from&nbsp;somewhere&nbsp;this&nbsp;is&nbsp;'#'&nbsp;a&nbsp;hashtag&gt;</span><br><span>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Token&nbsp;type=unordered_list&gt;</span><br><span>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Token&nbsp;type=text&nbsp;value=looks&nbsp;like&nbsp;i&nbsp;am&nbsp;living&nbsp;in&nbsp;a&nbsp;list&gt;</span><br><span>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Token&nbsp;type=text&nbsp;value=maybe&nbsp;check&nbsp;this&nbsp;link&nbsp;&gt;</span><br><span>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Token&nbsp;type=d_colon&nbsp;value=['link',&nbsp;'https://www.youtube.com/']&gt;</span><br><span>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Token&nbsp;type=text&nbsp;value=```&gt;</span><br><span>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Token&nbsp;type=text&nbsp;value=code&nbsp;block??&gt;</span><br><span>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Token&nbsp;type=text&nbsp;value=```&gt;</span><br><span>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Token&nbsp;type=eof&gt;</span><br><span></span>
         </div>
         <p>pretty cool isnt it</p>
 <h2> Step3: Transpiling</h2>
@@ -45,16 +50,16 @@
 <p>here is the basic idea</p>
 <p>we have some src string that contains html and we get 
         <span class="inline-code-blk">
-            &lt;Token&nbsp;type=text&nbsp;value=looks&nbsp;like&nbsp;i&nbsp;am&nbsp;living&nbsp;in&nbsp;a&nbsp;list&gt;
+            <span>&lt;Token&nbsp;type=text&nbsp;value=looks&nbsp;like&nbsp;i&nbsp;am&nbsp;living&nbsp;in&nbsp;a&nbsp;list&gt;</span>
         </span>
         , we check type of token then we append 
         <span class="inline-code-blk">
-            &lt;p&gt;looks&nbsp;like&nbsp;i&nbsp;am&nbsp;living&nbsp;in&nbsp;a&nbsp;list&lt;p&gt;
+            <span>&lt;p&gt;looks&nbsp;like&nbsp;i&nbsp;am&nbsp;living&nbsp;in&nbsp;a&nbsp;list&lt;p&gt;</span>
         </span>
          to our src file.</p>
 
         <div class="code-blk">
-            &nbsp;&nbsp;&nbsp;&nbsp;def&nbsp;create_p(content):<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;f"&lt;p&gt;{content}&lt;/p&gt;"<br>&nbsp;&nbsp;&nbsp;&nbsp;src&nbsp;=&nbsp;""<br>&nbsp;&nbsp;&nbsp;&nbsp;#&nbsp;go&nbsp;through&nbsp;every&nbsp;token<br>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;token&nbsp;in&nbsp;tokens:<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;token.type&nbsp;==&nbsp;TokenType.text:<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;src&nbsp;+=&nbsp;create_p(token.value)<br>
+            <span>&nbsp;&nbsp;&nbsp;&nbsp;def&nbsp;create_p(content):</span><br><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;f"&lt;p&gt;{content}&lt;/p&gt;"</span><br><span>&nbsp;&nbsp;&nbsp;&nbsp;src&nbsp;=&nbsp;""</span><br><span>&nbsp;&nbsp;&nbsp;&nbsp;#&nbsp;go&nbsp;through&nbsp;every&nbsp;token</span><br><span>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;token&nbsp;in&nbsp;tokens:</span><br><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;token.type&nbsp;==&nbsp;TokenType.text:</span><br><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;src&nbsp;+=&nbsp;create_p(token.value)</span><br><span></span>
         </div>
         <p>as u can see we use a while loop to control the cur token we are parsing,</p>
 <p>in headers we count how many hashtags there is to get the type of header same way markdown does it,</p>
@@ -70,6 +75,7 @@
 <p>and dont worry about the bad english i will fix it :).</p>
 
             </section>
+        
         </div>
     </body>
     <script src="main.js"> </script>

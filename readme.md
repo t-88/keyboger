@@ -3,12 +3,8 @@ i need a place where to put blogs, so i am making a bloging website but i want t
 
 # Run It!
 ```
-    ./keyboger.py > index.html
+    ./keyboger.py
 ```
 # Imgs
 ![first blog](./dev-imgs/looks_like_blog_to_me.png)
-
-## ToDo
--   syntax
--   transpiler
--   animation
+![second blog](./dev-imgs/after.png)
