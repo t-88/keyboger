@@ -18,7 +18,6 @@ html , body {
     min-width: 700px;
 
     font-family: monospace;
-
 }
 #blog {
     display: flex;
@@ -88,4 +87,8 @@ a:hover {
     height: 50px;
     border-radius: 100%;
     background-color: red;
+}
+
+li {
+    margin: 15px 0;
 }

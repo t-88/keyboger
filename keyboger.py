@@ -53,15 +53,16 @@ def html_temlplate(src):
 </html>"""
 
 class Token:
-    def __init__(self,typ,value="",pos =(-1 , -1)):
+    def __init__(self,typ,value="",pos =(-1 , -1),mdata = None):
         self.typ = typ
         self.value = value
         self.pos = pos
+        self.mdata = mdata
     def __repr__(self):
         out = f"<Token type={self.typ}"
         if self.value != "":
             out +=  f" value={self.value}"
-        out += " pos=(%d,%d)" % (self.pos[0] , self.pos[1])
+        out += f" mdata={self.mdata}"
         out += ">"
         return out
     def __str__(self):
@@ -155,9 +156,8 @@ class Tokenizer:
         text += self.get()
         return text
 
-    def append_token(self,typ,val=None,pos=None):
-        self.tknz.append(Token(typ,val,pos))
-
+    def append_token(self,typ,val=None,pos=(-1,-1),mdata = None):
+        self.tknz.append(Token(typ,val,pos,mdata = mdata))
 
 
     def tokenize_code_blk(self,typ=TokenType.code,inline = False):
@@ -229,9 +229,16 @@ class Tokenizer:
                         else:
                             nomral_text = True
                     elif char == "-":
-                        correct = self.col + 1 < len(self.line) and self.line[self.col + 1] == " "
+                        pr = 0
+                        correct = False
+                        while self.col < len(self.line) and self.line[self.col] == "-":
+                            pr += 1
+                            self.col += 1
+                        if self.col != len(self.line) and self.line[self.col] == " ":
+                            correct =  True
+
                         if correct:
-                            self.append_token(TokenType.unordered_list,self.line,(self.row,self.col))
+                            self.append_token(TokenType.unordered_list,self.line,mdata={"pr":pr})
                     elif char == "`":
                         correct = self.peek_str(self.col,self.line + " ",3) == "```"
                         if correct:
@@ -270,6 +277,8 @@ class Transpiler:
         self.tknz = tknz
         self.idx = 0
         self.bl_setting = BlSetting()
+        self.list_idx = 0
+        self.list_content = ""
     
     def save(self,src_dir,file_path):
         if not os.path.exists("build/" + self.bl_setting.dir_name):
@@ -303,7 +312,6 @@ class Transpiler:
         return f"<p {attr}>{content}</p>\n"
     def create_span(self,content="",attr=""):
         return f"<span {attr}>{content}</span>\n"
-
     def create_ul(self,content=""):
         return f"<ul><li>{content}</li></ul>\n"
     def create_a(self,key,link):
@@ -329,10 +337,8 @@ class Transpiler:
         """
     def create_bold(self,content):
         return f"<strong>{content}</strong>"
-
     def create_italic(self,content):
         return f"<i>{content}</i>"
-
 
 
     def transpile(self):
@@ -342,7 +348,6 @@ class Transpiler:
             code = self.parse_token()
             if code:
                 self.src += code 
-            
             self.idx += 1
 
     def parse_token(self):
@@ -353,14 +358,23 @@ class Transpiler:
             priority , text = self.parse_header(tkn.value)
             return self.create_hX(priority,text)
         elif tkn.typ == TokenType.unordered_list:
-            return self.create_ul(self.parse_ul(tkn.value))
+            lists = []
+            while self.peek().typ == TokenType.unordered_list:
+                lists.append(self.peek())
+                self.idx += 1
+            self.idx -= 1
+            self.list_idx = 0
+            self.list_content = ""
+            self.parse_lists(lists)
+            return self.list_content
         elif tkn.typ == TokenType.text:
             return self.create_p(self.parse_text(tkn.value))
         elif tkn.typ == TokenType.code:
             return self.create_code_blk("code-blk",tkn.value[3:-3])
         else:
             assert False , f"Unexpected token in parse_token token: {tkn}"
-        
+    
+
     def parse_header(self,src):
         priority = 0
         idx = 0
@@ -451,12 +465,25 @@ class Transpiler:
             # Color: #FFFFFF : text
             code = self.create_span(macro[2],f"style='color : {macro[1]}'")
         return correct , code , idx
-
-
     def parse_setting_macro(self,line):
         line = line[1:-1].strip()
         code = line.split(" : ")
         self.bl_setting.set(code[0],code[1:])
+
+    def parse_lists(self,lists,depth = 0):
+        if self.list_idx >= len(lists):
+            return 
+
+        tkn = lists[self.list_idx]
+        if tkn.mdata["pr"] == depth:
+            self.list_content += f"<li>{tkn.value.strip()[tkn.mdata['pr']:]}</li>\n"
+            self.list_idx += 1
+            self.parse_lists(lists,depth)
+            self.parse_lists(lists,depth)
+        if tkn.mdata["pr"] > depth:
+            self.list_content += "<ul>\n"
+            self.parse_lists(lists,depth + 1)
+            self.list_content += "</ul>\n"
 
 
 
