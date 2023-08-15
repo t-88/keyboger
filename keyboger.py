@@ -268,6 +268,7 @@ class Tokenizer:
                 if char in skipable:
                     self.col += 1
                     continue
+
                 if is_first_char:
                     correct = True
                     is_first_char = False
@@ -301,8 +302,11 @@ class Tokenizer:
                         if correct:
                             self.tokenize_code_blk()
                     elif char == "." or str(char).isalnum():
+                        # saving curr char in-case that the parsing was wrong
+                        saved_pos = self.col
                         correct = self.tokenize_ordered_list(char)
-
+                        if not correct:
+                            self.col = saved_pos
                     else:
                         correct = False 
                     nomral_text = not correct
@@ -322,6 +326,7 @@ class Tokenizer:
                         else:
                             text  += self.line[self.col]
                         self.col += 1
+                    print(text)
                     self.append_token(TokenType.text,text,(self.row,self.col))
                     self.tknz += inline_tkns
 
@@ -436,7 +441,6 @@ class Transpiler:
             self.list_idx = 0
             self.list_content = ""
             self.parse_ordered(lists)
-            print(self.list_content)
             return self.list_content
         elif tkn.typ == TokenType.text:
             return self.create_p(self.parse_text(tkn.value))
@@ -532,7 +536,6 @@ class Transpiler:
             value = self.bl_setting.get(macro[0],macro[1])
             code = self.create_a(macro[1],value)
         elif macro[0] == "color":
-            #TODO: fix color macro some text gets deleted
             # Color Synatx
             # Color: #FFFFFF : text
             code = self.create_span(macro[2],f"style='color : {macro[1]}'")
@@ -562,8 +565,6 @@ class Transpiler:
                 # default behavior when on same lvl
                 self.list_content += f"<li>{tkn.value.strip()[tkn.mdata['pr']:]}</li>\n"
                 self.list_idx += 1
-
-
     def parse_ordered(self,lists,depth = -1,typ = "1"):
         # watch for the end of the list
         # if we are in the same lvl we consume
@@ -585,7 +586,6 @@ class Transpiler:
 
 
             elif typ != tkn.mdata["typ"] and tkn.mdata["typ"] != "":
-
                 # if ol type changes i deal with it 
                 # typ == "" means use default
                 self.list_content += "</ol>\n"
