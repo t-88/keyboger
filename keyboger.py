@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 import os
 import datetime
+import shutil
 
 def read_file(file_path):
     src = None
@@ -34,10 +35,10 @@ STRING_CHARS =  ["'",'"']
     
 def html_temlplate(src):
     return f"""<html>
-    <head> <link rel="stylesheet" href="style.css"> </head>
+    <head> <link rel="stylesheet" href="../style.css"> </head>
     <body>
         <header> 
-            <img src="pic.png" alt="profile-pic" id="img">
+            <img src="../pic.png" alt="profile-pic" id="img">
             <a href="">Main-Menu</a>
             <a href="">Github</a>
             <a href="">About</a>
@@ -48,7 +49,7 @@ def html_temlplate(src):
             </section>
         </div>
     </body>
-    <script src="main.js"> </script>
+    <script src="../main.js"> </script>
 </html>"""
 
 class Token:
@@ -70,18 +71,56 @@ class BlSetting:
     def __init__(self):
         self.dir_name = "tmp-" + str(datetime.datetime.now())
         self.links = {}
+        self.online_imgs = {}
+        self.local_imgs = {}
     def set(self,option,value):
         if option == "dir-name":
-            self.dir_name = value
+            self.dir_name = value[0]
         elif option == "link":
             if type(value) != list:
                 print("[Error] link should have a key and a value in setting macro") 
             self.links[value[0]] = value[1]  
+        elif option == "img":
+            if type(value) == list:
+                if len(value) == 3:
+                    if value[0] == "local":    
+                        self.local_imgs[value[1]] = value[2]
+                    elif value[0] == "online": 
+                        self.online_imgs[value[1]] = value[2]
+                else:
+                    self.online_imgs[value[1]] = value[2]
+            else:
+                raise Exception(f"[Error] wrong macro synatx {value} expected more options")
+        elif option == "make":
+            #TODO: implement more complex ui elements
+            pass
+        else:
+            assert False , f"[Error] unkown macro {option}: {value}"
     def get(self,option,value):
         if option == "link":
             if value in self.links:
                 return self.links[value]
             return value
+    def __repr__(self):
+        out = f"dir_name: {self.dir_name}\n"
+        out += "links:"
+        for link in self.links:
+            out += f"\t{link} : {self.links[link]}\n"
+
+        if len(self.local_imgs) > 0:
+            out += "local_imgs:"
+            for img in self.local_imgs:
+                out += f"\t{img} : {self.local_imgs[img]}\n"
+        if len(self.online_imgs) > 0:
+            out += "online_imgs:"
+            for img in self.online_imgs:
+                out += f"\t{img} : {self.online_imgs[img]}\n"
+
+        
+        return out
+
+    def __str__(self):
+        return self.__repr__()
 
 class Tokenizer:
     def __init__(self):
@@ -231,20 +270,23 @@ class Transpiler:
         self.tknz = tknz
         self.idx = 0
         self.bl_setting = BlSetting()
-    def create_dir(self):
-        if not os.path.exists("build/"):
-            os.mkdir("build")
-        if not os.path.exists("build/" + self.tknzer.settings.dir_name):
-            os.mkdir("build/" + self.tknzer.settings.dir_name)
-        else:
-            os.mkdir("build/" + self.tknzer.settings.dir_name +"-" + str(datetime.datetime.now()))
+    
+    def save(self,src_dir,file_path):
+        if not os.path.exists("build/" + self.bl_setting.dir_name):
+            os.mkdir("build/" + self.bl_setting.dir_name)
+        with open("build/" + self.bl_setting.dir_name + "/" + file_path,"w") as f:
+            f.write(html_temlplate(self.src))
+
+        for local_img in self.bl_setting.local_imgs:
+            shutil.copy2(f"{src_dir}/{self.bl_setting.local_imgs[local_img]}",f"build/{self.bl_setting.dir_name}/{self.bl_setting.local_imgs[local_img]}")
+    
     def run_transpile(self,src):
         self.tknzer.tokenize(src)
         self.tknz = self.tknzer.tknz
         self.transpile()
-    def save(self,file_path):
-        with open(file_path,"w") as f:
-            f.write(html_temlplate(self.src))
+
+
+
     def peek(self,far=0):
         if self.idx + far < len(self.tknz):
             return self.tknz[self.idx + far]
@@ -257,8 +299,11 @@ class Transpiler:
 
     def create_hX(self,priority = 1,content=""):
         return f"<h{priority}>{content}</h{priority}>\n"
-    def create_p(self,content=""):
-        return f"<p>{content}</p>\n"
+    def create_p(self,content="",attr=""):
+        return f"<p {attr}>{content}</p>\n"
+    def create_span(self,content="",attr=""):
+        return f"<span {attr}>{content}</span>\n"
+
     def create_ul(self,content=""):
         return f"<ul><li>{content}</li></ul>\n"
     def create_a(self,key,link):
@@ -282,7 +327,13 @@ class Transpiler:
             {code}
         </{tag}>
         """
-            
+    def create_bold(self,content):
+        return f"<strong>{content}</strong>"
+
+    def create_italic(self,content):
+        return f"<i>{content}</i>"
+
+
 
     def transpile(self):
         self.idx = 0
@@ -327,27 +378,54 @@ class Transpiler:
             idx += 1
             normal_text = True
 
-            if char == ":" and idx < len(src) and src[idx] == "[":
+            if char == "\\":
+                content += src[idx]
+                idx += 1
+            elif char == "*":
+                normal_text = False
+                text_style = 1
+                while idx < len(src) and src[idx] == "*":
+                    text_style += 1
+                    idx += 1
+
+                text = ""
+                while idx < len(src):
+                    if src[idx] == "\\":
+                        text += src[idx + 1]
+                        idx += 1
+                    elif src[idx] == "*":
+                        idx += text_style
+                        break
+                    else:
+                        text += src[idx]
+                    idx += 1
+                
+                # TODO: Recrusive parsing, i could have a link here?
+                if text_style == 1:
+                    content += self.create_bold(text)
+                elif text_style == 2:
+                    content += self.create_italic(text)
+                elif text_style == 3:
+                    content += self.create_italic(self.create_bold(text))
+
+
+            elif char == ":" and idx < len(src) and src[idx] == "[":
                 if src[idx + 1] == "@":
                     idx += 4
                     self.idx += 1
                     content += self.create_code_blk("inline-code-blk",self.tknz[self.idx].value[3:-3])
                     normal_text = False
                 else:
-                    correct , code , ahead = self.parse_text_macro(src[idx:])
+                    correct , code , ahead = self.parse_inline_macro(src[idx:])
                     normal_text = not correct
                     if correct:
                         content += code
                         idx += ahead
             if normal_text:
-                if char == "\\":
-                    content += src[idx]
-                    idx += 1
-                else:
-                    content += char  
+                content += char  
 
         return content
-    def parse_text_macro(self,line):
+    def parse_inline_macro(self,line):
         macro = ""
         idx = 0
         correct = False
@@ -359,24 +437,36 @@ class Transpiler:
             macro += line[idx]
             idx += 1
         
+        # TODO: Fix Link Option
+        # link : name : url
+        # link : url
+        # link : name
         code = ""
         macro = macro[1:].split("::")
         if macro[0] == "link":
             value = self.bl_setting.get(macro[0],macro[1])
             code = self.create_a(macro[1],value)
-
+        elif macro[0] == "color":
+            # Color Synatx
+            # Color: #FFFFFF : text
+            code = self.create_span(macro[2],f"style='color : {macro[1]}'")
         return correct , code , idx
+
+
     def parse_setting_macro(self,line):
         line = line[1:-1].strip()
         code = line.split(" : ")
         self.bl_setting.set(code[0],code[1:])
 
 
-src = read_file("Developing_A_Bloging_Engine/main.bl")
+
+dir_path = "syntax-preview"
+
+src = read_file(f"{dir_path}/main.bl")
 src = src.replace("<","&lt;")
 src = src.replace(">","&gt;")
 
-
 transpiler =  Transpiler()
 transpiler.run_transpile(src)
-transpiler.save("build/index.html")
+transpiler.save(dir_path,"index.html")
+print(transpiler.bl_setting)

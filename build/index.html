@@ -1,82 +1,8 @@
-<html>
-    <head> <link rel="stylesheet" href="style.css"> </head>
-    <body>
-        <header> 
-            <img src="pic.png" alt="profile-pic" id="img">
-            <a href="">Main-Menu</a>
-            <a href="">Github</a>
-            <a href="">About</a>
-        </header>
-        <div id="blog">
-            <section id="content">
-            <h1> Developing A Bloging Engine</h1>
-<p>Hello there, i never made a blog so frogive me if i fucked it up or smth, anyway i decided to start bloging to record my journey and give back to the internet.</p>
-<p>so to start it, i wanted to my my own bloging framewrok? compiler/transpiler? engine?. so enjoy the ride i think.</p>
-<h2> Step1: Syntax</h2>
-<p>we need to set our language syntax before we even start, this why i am writing a blog about a bloging engine, i am gonna use the cur source and turn it to a blog,</p>
-<p>this lang is inspired by <a href='https://en.wikipedia.org/wiki/Markdown'>markdown</a>
-.</p>
-<ul><li>   '-' un-ordered list notation.</li></ul>
-<ul><li>   '#' for section and headers.</li></ul>
-<ul><li>   ':[type::arg1::arg2::...]:' for links, imgs, events, etc.</li></ul>
-<ul><li>   '[var:value]' macros to configure the document.</li></ul>
-<ul><li>   '```' for code blocks</li></ul>
-<p>i think thats good enough as a start</p>
-<h2> Step2: Tokenizing</h2>
-<p><a href='https://en.wikipedia.org/wiki/Lexical_analysis#Tokenization'>tokenization</a>
- to my understanding is taking a text file and converting it to a list of tokens to make easier to parse that file down the road,</p>
-<p>example:</p>
-<p>our text file:      "= 1 + 2"</p>
-<p>output of tokenizer: [(equal),(number,1),(operation,+),(number,2)]</p>
-<p>so, to tokenzing our file gonna be simple i think.</p>
-<p>we gonna create a tokenizer class all its does is to loop throught every char in our source file, ignores spaces and newlines and </p>
-<p>checks if that char is reserved, reserved chars are '[',']','#','-','```'.'::'. its pretty stright forward.</p>
-<p>and about macros, they are for configuration so they talk directly to the transpiler, they are hidden and wont show up in the blog</p>
-<p>for now at least we gonna skip over macros until we have smthing solid</p>
-<p>an example of it running on this src file:</p>
-<p>src file:</p>
-
-        <div class="code-blk">
-            <span>&nbsp;&nbsp;&nbsp;&nbsp;[dir-name&nbsp;:&nbsp;Text_Blog]</span><br><span>&nbsp;&nbsp;&nbsp;&nbsp;#&nbsp;Header1</span><br><span>&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;hello&nbsp;from&nbsp;somewhere&nbsp;this&nbsp;is&nbsp;'#'&nbsp;a&nbsp;hashtag</span><br><span>&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;looks&nbsp;like&nbsp;i&nbsp;am&nbsp;living&nbsp;in&nbsp;a&nbsp;list</span><br><span>&nbsp;&nbsp;&nbsp;&nbsp;maybe&nbsp;check&nbsp;this&nbsp;link&nbsp;:[link::https://www.youtube.com/]:</span><br><span>&nbsp;&nbsp;&nbsp;&nbsp;```</span><br><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;code&nbsp;block??</span><br><span>&nbsp;&nbsp;&nbsp;&nbsp;```</span><br><span></span>
-        </div>
-        <p>our tokenizer gives:</p>
-
-        <div class="code-blk">
-            <span>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Token&nbsp;type=hashtag&gt;</span><br><span>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Token&nbsp;type=text&nbsp;value=Header1&gt;</span><br><span>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Token&nbsp;type=unordered_list&gt;</span><br><span>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Token&nbsp;type=text&nbsp;value=hello&nbsp;from&nbsp;somewhere&nbsp;this&nbsp;is&nbsp;'#'&nbsp;a&nbsp;hashtag&gt;</span><br><span>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Token&nbsp;type=unordered_list&gt;</span><br><span>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Token&nbsp;type=text&nbsp;value=looks&nbsp;like&nbsp;i&nbsp;am&nbsp;living&nbsp;in&nbsp;a&nbsp;list&gt;</span><br><span>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Token&nbsp;type=text&nbsp;value=maybe&nbsp;check&nbsp;this&nbsp;link&nbsp;&gt;</span><br><span>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Token&nbsp;type=d_colon&nbsp;value=['link',&nbsp;'https://www.youtube.com/']&gt;</span><br><span>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Token&nbsp;type=text&nbsp;value=```&gt;</span><br><span>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Token&nbsp;type=text&nbsp;value=code&nbsp;block??&gt;</span><br><span>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Token&nbsp;type=text&nbsp;value=```&gt;</span><br><span>&nbsp;&nbsp;&nbsp;&nbsp;&lt;Token&nbsp;type=eof&gt;</span><br><span></span>
-        </div>
-        <p>pretty cool isnt it</p>
-<h2> Step3: Transpiling</h2>
-<p>after we got our tokens, transpiling is simple all we have to do is to pass through every token and append html to our output file</p>
-<p>here is the basic idea</p>
-<p>we have some src string that contains html and we get 
-        <span class="inline-code-blk">
-            <span>&lt;Token&nbsp;type=text&nbsp;value=looks&nbsp;like&nbsp;i&nbsp;am&nbsp;living&nbsp;in&nbsp;a&nbsp;list&gt;</span>
-        </span>
-        , we check type of token then we append 
-        <span class="inline-code-blk">
-            <span>&lt;p&gt;looks&nbsp;like&nbsp;i&nbsp;am&nbsp;living&nbsp;in&nbsp;a&nbsp;list&lt;p&gt;</span>
-        </span>
-         to our src file.</p>
-
-        <div class="code-blk">
-            <span>&nbsp;&nbsp;&nbsp;&nbsp;def&nbsp;create_p(content):</span><br><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;f"&lt;p&gt;{content}&lt;/p&gt;"</span><br><span>&nbsp;&nbsp;&nbsp;&nbsp;src&nbsp;=&nbsp;""</span><br><span>&nbsp;&nbsp;&nbsp;&nbsp;#&nbsp;go&nbsp;through&nbsp;every&nbsp;token</span><br><span>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;token&nbsp;in&nbsp;tokens:</span><br><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;token.type&nbsp;==&nbsp;TokenType.text:</span><br><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;src&nbsp;+=&nbsp;create_p(token.value)</span><br><span></span>
-        </div>
-        <p>as u can see we use a while loop to control the cur token we are parsing,</p>
-<p>in headers we count how many hashtags there is to get the type of header same way markdown does it,</p>
-<p>its just a basic idea, the full implmentation should be recusive, think about it what if we have as ol element a code block or header it will be treated as text so better</p>
-<p>make it recusive to handle cases like that</p>
-<h2> Step4: Building Html</h2>
-<p>a simple solution to getting a website is to just copy the output of transpiler to index.html and done,</p>
-<p>but here comes time to add ur magic styles and better html tags and more sugar for the language...</p>
-<p>looks like i got my self a good src file, if everything went good u will be reading a blog from my website [page : website0.1 : website0.1]</p>
-<p>check out the first version of the website , its filled with bugs lets start the real work now</p>
-<h2> Btw</h2>
-<p>plz dont take me seriously, i dont know what i am talking about.</p>
-<p>and dont worry about the bad english i will fix it :).</p>
-
-            </section>
-        
-        </div>
-    </body>
-    <script src="main.js"> </script>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+</head>
+<body>
+    
+</body>
 </html>
