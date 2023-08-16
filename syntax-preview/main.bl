@@ -1,7 +1,6 @@
 [dir-name : syntax-preview ]
 [link : markdown : https://en.wikipedia.org/wiki/Markdown]
 [img : local : computer : computer-engineer.png]
-[make : tree]
 
 # Links and Imgs
 ## Links
@@ -62,7 +61,7 @@ maybe add :[color::#FF00FF::Colors]: to text
 same as markdown: ``` print("Wats Up") ```
 
 # Macros
-macros handle state or moving parts, maybe animation can say for sure,
-smthing like a blog titles preview tree
+macros handle state or moving parts, maybe animation cant say for sure,
+smthing like a blog preview title  tree
 [make : tree]
 

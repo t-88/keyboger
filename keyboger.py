@@ -3,6 +3,9 @@ import os
 import datetime
 import shutil
 
+
+#TODO: new lines should give space
+
 def read_file(file_path):
     src = None
     with open(file_path,"r") as f:
@@ -83,23 +86,27 @@ class BlSetting:
                 print("[Error] link should have a key and a value in setting macro") 
             self.links[value[0]] = value[1]  
         elif option == "img":
+            # remove spacees
+            value[0] = value[0].strip()
+            value[1] = value[1].strip()
+            
             if type(value) == list:
                 if len(value) == 3:
+                    value[2] = value[2].strip()
                     if value[0] == "local":    
                         self.local_imgs[value[1]] = value[2]
                     elif value[0] == "online": 
                         self.online_imgs[value[1]] = value[2]
                 else:
-                    self.online_imgs[value[1]] = value[2]
+                    self.online_imgs[value[0]] = value[1]
             else:
                 raise Exception(f"[Error] wrong macro synatx {value} expected more options")
         elif option == "make":
-            #TODO: implement more complex ui elements
-            pass
+            self.make(value)
         else:
             assert False , f"[Error] unkown macro {option}: {value}"
     def get(self,option,value):
-        if option == "link" or option == "img":
+        if option == "link":
             # link : name : url
             if  len(value) == 2:
                 return (value[0],value[1])
@@ -131,10 +138,15 @@ class BlSetting:
             if not output:
                 output = (value[0],value[0])
 
-            if not local_saved:
+            if not local_saved and option == "local_img":
                 self.set("img",["local",output[0],output[1]])
 
             return output        
+
+
+    def make(self,args):
+        print(args)
+
 
     def __repr__(self):
         out = f"dir_name: {self.dir_name}\n"
@@ -143,7 +155,7 @@ class BlSetting:
             out += f"\t{link} : {self.links[link]}\n"
 
         if len(self.local_imgs) > 0:
-            out += "local_imgs:"
+            out += "local_imgs:\n"
             for img in self.local_imgs:
                 out += f"\t{img} : {self.local_imgs[img]}\n"
         if len(self.online_imgs) > 0:
@@ -153,7 +165,6 @@ class BlSetting:
 
         
         return out
-
     def __str__(self):
         return self.__repr__()
 
