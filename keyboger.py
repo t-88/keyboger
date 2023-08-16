@@ -497,7 +497,6 @@ class Transpiler:
             return self.create_code_blk("code-blk",tkn.value[3:-3])
         elif tkn.typ == TokenType.new_line:
             return self.create_br()
-
         else:
             assert False , f"Unexpected token in parse_token token: {tkn}"
     
