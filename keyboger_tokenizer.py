@@ -126,7 +126,9 @@ class KeybogerTokenizer:
             # if we overflow we return "\"
             returned = cur
             # else we return escaped char
-            if not overflow: returned = char
+            if not overflow: 
+                returned = char
+                self.inc()
             return False , returned
 
         elif cur == ":":
@@ -146,14 +148,7 @@ class KeybogerTokenizer:
         return False , cur
     
     def tokenize_special_chars(self,cur):
-        if cur == "\\":
-            # we know there is no overflow we already dealt with it in 
-            # check_special_chars
-            _ , char  = self.peek(1)
-            self.add_tkn(TokenType.text,char)
-            self.inc()
-            
-        elif cur == ":":
+        if cur == ":":
             if self.far_peek(":",1):
                 self.add_tkn(TokenType.double_colon,"::")
                 self.inc()

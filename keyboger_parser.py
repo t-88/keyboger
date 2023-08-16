@@ -3,6 +3,7 @@ from keyboger_tokenizer import TokenType
 
 
 class AstType(Enum):
+    head = auto()
     text = auto()
     new_line = auto()
     header = auto()
@@ -43,7 +44,7 @@ class KeybogerParser:
         self.tknz = tknz
 
         self.cur = 0  # idx
-        self.ast = [] # ast
+        self.head = None # ast
 
         # macros and saved consts
         self.setting = Keyboger_Setting()
@@ -82,24 +83,20 @@ class KeybogerParser:
 
     
 
-    # just adding ast elem here
-    def add_ast_element(self,typ,content = []):
-        self.ast.append(AstElement(typ,content))
-
     # mergin text asts together in-case of bad synatx 
     def sum_up_text(self):
         idx = 0
 
-        while idx < len(self.ast):
-            if self.ast[idx].typ == AstType.text:
+        while idx < len(self.head.content):
+            if self.head.content[idx].typ == AstType.text:
                 start_idx = idx
                 content = ""
-                while idx < len(self.ast) and self.ast[idx].typ == AstType.text:
-                    content += self.ast[idx].content
+                while idx < len(self.head.content) and self.head.content[idx].typ == AstType.text:
+                    content += self.head.content[idx].content
                     idx += 1
 
                 # mergin the ast
-                self.ast = self.ast[0:start_idx] + [AstElement(AstType.text,content)] + self.ast[idx:]
+                self.head.content = self.head.content[0:start_idx] + [AstElement(AstType.text,content)] + self.head.content[idx:]
                 idx -= idx - start_idx 
 
             idx += 1
@@ -112,7 +109,7 @@ class KeybogerParser:
         self.cur = 0
 
         # create ast using tknz
-        self.ast = []
+        self.head = AstElement(AstType.head,[])
 
         while not self.eof_tknz():
             _ , tkn = self.peek()
@@ -120,7 +117,7 @@ class KeybogerParser:
             # get output and save it to ast
             ast_elem = self.parse_macro(tkn)
             if ast_elem:
-                self.ast.append(ast_elem)
+                self.head.content.append(ast_elem)
 
             self.inc()
 
@@ -129,8 +126,8 @@ class KeybogerParser:
         self.sum_up_text()
 
         # print(self.setting.macros)
-        for elem in self.ast:
-            print(elem)
+        # for elem in self.head.content:
+            # print(elem)
     
     def parse_macro(self,tkn):
         if tkn.typ == TokenType.macro_start:
@@ -158,8 +155,12 @@ class KeybogerParser:
 
             # parsing the first element 'id' 
             _ , next_tkn  = self.inc()
+            
+            content = [ ]
+
+            macro_id = ""
             if next_tkn.val in macros_ids:
-                content = [ self.parse_macro(next_tkn) ]
+                macro_id = self.parse_macro(next_tkn).content
             else:
                 correct = False
             
@@ -176,7 +177,7 @@ class KeybogerParser:
                     content.append(self.parse_macro(next_tkn))
     
                 if self.far_peek(TokenType.inline_macro_end):
-                    return AstElement(AstType.inline_macro,content)
+                    return AstElement(AstType.inline_macro,content,data={"id":macro_id})
                 else:
                     correct = False
             
@@ -202,7 +203,6 @@ class KeybogerParser:
                 counter += 1
                 _ , tkn = self.inc()
 
-
             content = self.parse_macro(tkn)
 
             return AstElement(AstType.header,content,data={"depth":counter}) 
@@ -213,7 +213,23 @@ class KeybogerParser:
         # making ast_text_elements
         return AstElement(AstType.text,tkn.val)
 
-
+    def print_tree(self,ast,depth = -1):
+        # TODO: add  some kinda of depth spacing
+        if ast.typ == AstType.head:
+            for elem in ast.content:
+                self.print_tree(elem,depth + 1)
+        elif ast.typ == AstType.header:
+            print(f"Header{ast.data['depth']}: ",end="")
+            self.print_tree(ast.content,depth + 1)
+            print("")
+        elif ast.typ == AstType.inline_macro:
+            print("\033[34m" +ast.data["id"] + "\033[0m",end="")
+        elif ast.typ == AstType.text:
+            print(ast.content,end="")
+        elif ast.typ == AstType.new_line:
+            print()
+        else:
+            assert False , "Unreachable"
 
 
 
