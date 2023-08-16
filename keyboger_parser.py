@@ -8,6 +8,8 @@ class AstType(Enum):
     new_line = auto()
     header = auto()
     inline_macro = auto()
+    unordered_list = auto()
+    list_container = auto()
 
 macros_ids = [
     "link",
@@ -66,8 +68,11 @@ class KeybogerParser:
             return True , None
         # back to original idx
         self.cur -= far
-
         return False ,  self.tknz[self.cur + far]
+    # usefull to remove the need for _ , tkn = self.peek()
+    def peek_tkn(self,far=0):
+        return self.peek(far)[1]
+
     def far_peek(self,want,far = 0):
         # far peek retuns a False when overflowing or char  not equal
         overflow , found = self.peek(far)
@@ -115,9 +120,10 @@ class KeybogerParser:
             _ , tkn = self.peek()
 
             # get output and save it to ast
-            ast_elem = self.parse_macro(tkn)
+            ast_elem = self.parse_list(tkn)
             if ast_elem:
                 self.head.content.append(ast_elem)
+            
 
             self.inc()
 
@@ -129,6 +135,84 @@ class KeybogerParser:
         # for elem in self.head.content:
             # print(elem)
     
+
+    def merge_lists(self,lists):
+        idx = [0]
+
+        # its a recrsive funcion uses global vars 
+        # i made sub-function because i didnt want the global vars as a part of the class
+        # i used list bc nomral integer didnt work for some reason
+        def inner_merge_list(depth = 0):
+            # output list
+            inner_lists = []
+            while idx[0] < len(lists):
+                # if we are not in the same lvl
+                if lists[idx[0]].data["depth"] != depth:
+                    if lists[idx[0]].data["depth"] > depth:
+                        # we move up
+                        inner_lists.append(AstElement(AstType.list_container,content=inner_merge_list(depth + 1)))
+                    else:
+                        # or we go down
+                        return inner_lists
+                else:
+                    # same lvl , just append list
+                    inner_lists.append(lists[idx[0]])
+                    idx[0] += 1
+            return inner_lists
+        
+        return inner_merge_list()
+    
+    def parse_list(self,tkn):
+        correct = True
+        if tkn.typ == TokenType.unordered_list:
+            lists = []
+            # if typ == tab that means we are in a inner loop
+            # we just collect lists
+            while tkn.typ == TokenType.unordered_list or tkn.typ == TokenType.tab:
+
+                depth = 0
+                if tkn.typ == TokenType.tab:
+                    while self.far_peek(TokenType.tab):
+                        depth += 1
+                        self.inc()
+                
+                # FIXME: maybe there are correct lists fix this
+                if not self.far_peek(TokenType.unordered_list):
+                    correct = False
+                    break
+                
+
+                # remove "-"
+                self.inc()
+                content_ast = self.parse_macro(self.peek_tkn())
+                # strip additional spaces
+                if content_ast.typ == AstType.text: 
+                    content_ast.content = content_ast.content.strip()
+                self.inc()
+
+                # save list element
+                lists.append(
+                    AstElement(AstType.unordered_list,content_ast,data={"depth":depth,"inner":[]})
+                    )
+
+                # lists take the whole line
+                if self.far_peek(TokenType.new_line):
+                    # consume the new-line
+                    self.inc()
+                else: assert False , "Unreachable" 
+
+
+                eof , tkn = self.peek()
+                if eof: break
+            
+            # FIXME: done like how i remove one
+            self.cur -= 1
+            if correct:
+                lists = self.merge_lists(lists)
+                return AstElement(AstType.list_container,lists)  
+        
+        return self.parse_macro(tkn)    
+
     def parse_macro(self,tkn):
         if tkn.typ == TokenType.macro_start:
             # if we find text and macro end that means
@@ -186,6 +270,8 @@ class KeybogerParser:
                 self.cur = wayback
 
         return self.parse_new_line(tkn)
+
+
     
     def parse_new_line(self,tkn):
         if tkn.typ == TokenType.new_line:
@@ -228,10 +314,29 @@ class KeybogerParser:
             print(ast.content,end="")
         elif ast.typ == AstType.new_line:
             print()
+        elif ast.typ == AstType.list_container:
+            for elem in ast.content:
+                self.print_tree(elem)
+        elif ast.typ == AstType.unordered_list:
+            # print(f"List-Elem: {ast.data['depth']}"+"   " * ast.data["depth"],end="")
+            print("   " * ast.data["depth"],end="")
+            self.print_tree(ast.content)
+            print()
+            if ast.data["inner"]:
+                self.print_tree(ast.data["inner"])
         else:
-            assert False , "Unreachable"
+            assert False , f"Unreachable {ast}"
 
-
+    # lists can be very confusing, this helpfucl function makes debuging easier
+    def print_lists(self,ast):
+        if ast.typ == AstType.list_container:
+            print("container:")
+            for elem in ast.content:
+                print_lists(elem)
+        elif ast.typ == AstType.unordered_list:
+            print(ast.data["depth"],ast.content)        
+            if ast.data["inner"]:
+                print_lists(ast.data["inner"])
 
             
         

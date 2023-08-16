@@ -9,6 +9,8 @@ class TokenType(Enum):
     macro_start = auto()
     macro_end = auto()
     hashtag = auto()
+    unordered_list = auto()
+    tab = auto()
     
     eof = auto()
     count = auto()
@@ -21,7 +23,10 @@ class Token:
     def __repr__(self):
         out = f"<Token type={self.typ}"
         if self.val != "":
-            out +=  f" value={self.val}"
+            if self.val == "\t":
+                out +=  f" value=\\t"
+            else:
+                out +=  f" value={self.val}"
         out += ">"
         return out
     def __str__(self):
@@ -144,6 +149,8 @@ class KeybogerTokenizer:
         # headers
         elif self.first_in_line:
             if cur == "#": return True , cur
+            elif cur == "-": return True , cur
+            elif cur == "\t": return True , cur
 
         return False , cur
     
@@ -167,14 +174,17 @@ class KeybogerTokenizer:
             else:
                 self.add_tkn(TokenType.macro_end,"]")    
         
+        # chars that happen to be in start of line
         elif cur == "#":
             counter = 0
             while self.far_peek("#",counter):
                 self.add_tkn(TokenType.hashtag,"#")
                 counter += 1
-            self.col += counter    
-
-
+            self.col += counter
+        elif cur == "-":
+            self.add_tkn(TokenType.unordered_list,"-")
+        elif cur == "\t":
+            self.add_tkn(TokenType.tab,"\t")
 
         
         else:  
@@ -209,7 +219,21 @@ class KeybogerTokenizer:
                     overflow , cur = self.peek()
                     if overflow: break
 
-                                
+                    # counting consecative " "
+                    if cur == " ":
+                        # TODO: smth off tabs are not tabs, tabs are 4 spaces?
+                        # every 4 spaces are a tab, i think vs-code does some conversion 
+                        space_counter = 0
+                        while self.far_peek(" ") and space_counter != 4:
+                            space_counter += 1
+                            self.inc()
+    
+                        if space_counter == 4: 
+                            self.col -= 1
+                            cur = "\t"
+                        elif self.end_of_src() or not self.far_peek(" "):
+                            self.col = self.col - space_counter 
+
 
                     is_normal , cur  = self.check_special_chars(cur)
 
@@ -217,6 +241,7 @@ class KeybogerTokenizer:
                     # ignore spaces and tabs 
                     if self.first_in_line:
                         self.first_in_line = cur in [" ","\t"]
+
 
                     
                     # check_special_chars return true if there is special char
