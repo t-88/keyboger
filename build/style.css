@@ -35,7 +35,20 @@ ul::before {
 }
 h1, h2, h3 , h4, h5 , h6 {
     color: var(--header-color);
+    width: fit-content;
 }
+
+h1 { font-size: 1.5em;}
+h2 {  font-size: 1.3em; }
+
+h1::after, h2::after, h3::after , h4::after, h5::after , h6::after {
+    content: " ";
+    display: block;
+    border: solid 1px #181818; 
+    margin-top: 5px;
+    min-width: inherit;
+}
+
 
 a {
     color: white;

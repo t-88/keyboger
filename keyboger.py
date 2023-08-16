@@ -26,6 +26,7 @@ class TokenType:
     code = 9
     inline_code = 10
     ordered_list = 11
+    new_line = 12
 
     mapped = {
         "#":"hashtag",
@@ -78,6 +79,28 @@ class BlSetting:
         self.links = {}
         self.online_imgs = {}
         self.local_imgs = {}
+    
+    def __repr__(self):
+        out = f"dir_name: {self.dir_name}\n"
+        out += "links:"
+        for link in self.links:
+            out += f"\t{link} : {self.links[link]}\n"
+
+        if len(self.local_imgs) > 0:
+            out += "local_imgs:\n"
+            for img in self.local_imgs:
+                out += f"\t{img} : {self.local_imgs[img]}\n"
+        if len(self.online_imgs) > 0:
+            out += "online_imgs:"
+            for img in self.online_imgs:
+                out += f"\t{img} : {self.online_imgs[img]}\n"
+
+        
+        return out
+    def __str__(self):
+        return self.__repr__()
+    
+    
     def set(self,option,value):
         if option == "dir-name":
             self.dir_name = value[0]
@@ -148,35 +171,13 @@ class BlSetting:
         print(args)
 
 
-    def __repr__(self):
-        out = f"dir_name: {self.dir_name}\n"
-        out += "links:"
-        for link in self.links:
-            out += f"\t{link} : {self.links[link]}\n"
-
-        if len(self.local_imgs) > 0:
-            out += "local_imgs:\n"
-            for img in self.local_imgs:
-                out += f"\t{img} : {self.local_imgs[img]}\n"
-        if len(self.online_imgs) > 0:
-            out += "online_imgs:"
-            for img in self.online_imgs:
-                out += f"\t{img} : {self.online_imgs[img]}\n"
-
-        
-        return out
-    def __str__(self):
-        return self.__repr__()
-
+    
 class Tokenizer:
     def __init__(self):
         self.src = ""
         self.tknz = []
 
         self.idx = 0
-        self.char_idx = 0
-        self.settings = BlSetting()
-
 
         self.lsrc = []
         self.line = ""
@@ -184,6 +185,7 @@ class Tokenizer:
         if idx + far < len(src):
             return src[idx + far]
         assert False , f"Out of Range: in peek idx={idx} far={far}"
+
     def peek_str(self,idx,src,far=0):
         if idx + far >= len(src):
             return "" 
@@ -194,17 +196,8 @@ class Tokenizer:
             curr += 1
         return val
     
-    def extract_str(self,str_char):
-        text = str_char
-        while self.idx < len(self.src) and self.peek() != str_char:
-            text += self.get()
-        text += self.get()
-        return text
-
     def append_token(self,typ,val=None,pos=(-1,-1),mdata = None):
         self.tknz.append(Token(typ,val,pos,mdata = mdata))
-
-
     def tokenize_code_blk(self,typ=TokenType.code,inline = False):
         self.col += 3
         
@@ -291,11 +284,13 @@ class Tokenizer:
             self.append_token(TokenType.ordered_list,self.line,mdata={"start":start,"pr" : pr,"typ": typ})
         
         return correct
+    
+    
+    
     def tokenize(self,src):
         self.src = src
         self.lsrc = self.src.split("\n")
         self.tknz = []
-
 
         self.row = 0
         while self.row < len(self.lsrc):
@@ -304,6 +299,11 @@ class Tokenizer:
             self.line = self.lsrc[self.row]
 
             is_first_char = True
+
+            if len(self.line) == 0:
+                # new-line token
+                self.append_token(TokenType.new_line)
+
             while self.col < len(self.line):
                 char = self.line[self.col]
                 nomral_text = False
@@ -351,6 +351,8 @@ class Tokenizer:
                         correct = self.tokenize_ordered_list(char)
                         if not correct:
                             self.col = saved_pos
+
+
                     else:
                         correct = False 
                     nomral_text = not correct
@@ -448,6 +450,8 @@ class Transpiler:
         return f"<i>{content}</i>"
     def create_img(self,alt,link):
         return f"<img alt='{alt}' src='{link}'>\n"
+    def create_br(self):
+        return "<br>"
 
 
     def transpile(self):
@@ -491,6 +495,9 @@ class Transpiler:
             return self.create_p(self.parse_text(tkn.value))
         elif tkn.typ == TokenType.code:
             return self.create_code_blk("code-blk",tkn.value[3:-3])
+        elif tkn.typ == TokenType.new_line:
+            return self.create_br()
+
         else:
             assert False , f"Unexpected token in parse_token token: {tkn}"
     

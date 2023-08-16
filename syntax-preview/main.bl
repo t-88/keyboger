@@ -13,7 +13,6 @@ u can use online imgs like this python logo:
 :[img::python-logo::https://www.python.org/static/img/python-logo.png]:
 or local imgs that are in the same dir: :[local-img::beverage.png]:
 img from :[link::flaticon::https://www.flaticon.com/free-icon/beverage_11651492?related_id=11651492&origin=pack]:
-
 or as variable using macros:  
 :[local-img::computer]: 
 
@@ -36,6 +35,7 @@ or as variable using macros:
         --- oga
     -- boga
 -   yet another list
+
 ## Ordered Lists
 1. This is one
 .  u give the first char and the list takes care of the rest
@@ -51,7 +51,6 @@ or as variable using macros:
         . ?
         . ?
     .  wherever happens
-
 
 # Text Style
 *bold* text is kinda nice and **italic** too, whats better is ***italic-bold***.
