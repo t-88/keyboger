@@ -99,10 +99,43 @@ class BlSetting:
         else:
             assert False , f"[Error] unkown macro {option}: {value}"
     def get(self,option,value):
-        if option == "link":
-            if value in self.links:
-                return self.links[value]
-            return value
+        if option == "link" or option == "img":
+            # link : name : url
+            if  len(value) == 2:
+                return (value[0],value[1])
+            
+            # link : name
+            if value[0] in self.links:
+                return (value[0],self.links[value[0]])
+
+            # link : url
+            return (value[0],value[0])
+        elif option == "img" or option == "local-img":
+            output = None
+            local_saved = False
+
+            # img : alt : url
+            if  len(value) == 2:
+                output = (value[0],value[1])
+            
+            # img : name
+            # check  local and online imgs
+            if not output:
+                if value[0] in self.local_imgs:
+                    local_saved = True
+                    output = (value[0],self.local_imgs[value[0]])
+                elif value[0] in self.online_imgs:
+                    output = (value[0],self.online_imgs[value[0]])
+
+            # img : url
+            if not output:
+                output = (value[0],value[0])
+
+            if not local_saved:
+                self.set("img",["local",output[0],output[1]])
+
+            return output        
+
     def __repr__(self):
         out = f"dir_name: {self.dir_name}\n"
         out += "links:"
@@ -326,7 +359,6 @@ class Tokenizer:
                         else:
                             text  += self.line[self.col]
                         self.col += 1
-                    print(text)
                     self.append_token(TokenType.text,text,(self.row,self.col))
                     self.tknz += inline_tkns
 
@@ -403,6 +435,8 @@ class Transpiler:
         return f"<strong>{content}</strong>"
     def create_italic(self,content):
         return f"<i>{content}</i>"
+    def create_img(self,alt,link):
+        return f"<img alt='{alt}' src='{link}'>\n"
 
 
     def transpile(self):
@@ -526,20 +560,22 @@ class Transpiler:
             macro += line[idx]
             idx += 1
         
-        # TODO: Fix Link Option
-        # link : name : url
-        # link : url
-        # link : name
+
         code = ""
         macro = macro[1:].split("::")
         if macro[0] == "link":
-            value = self.bl_setting.get(macro[0],macro[1])
-            code = self.create_a(macro[1],value)
+            (name,href) = self.bl_setting.get(macro[0],macro[1:])
+            code = self.create_a(name,href)
         elif macro[0] == "color":
             # Color Synatx
             # Color: #FFFFFF : text
             code = self.create_span(macro[2],f"style='color : {macro[1]}'")
-        
+        elif macro[0] == "img" or macro[0] == "local-img":
+            # in imgs we use alt img
+            (alt,href) = self.bl_setting.get(macro[0],macro[1:])
+            code = self.create_img(alt,href)
+        else:
+            assert False, "[Error]: Unknown macro %s" % (macro[0])
         return correct , code , idx
     def parse_setting_macro(self,line):
         line = line[1:-1].strip()
