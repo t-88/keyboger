@@ -5,36 +5,44 @@ from keyboger_parser import KeybogerParser , AstType
 
 
 src = r"""
-# define
-1. 1
-. 2
-    a. 3
-    . 3
-    . 4
-    . 3
-        A. 3
-        B. 3
-        . 3
-        . 3
-            2. 3
-                2. 3
-                3. 3
-                . 3
-                8. 3
-                . 3
-                . 3
-# define inerr
-. A
-    . B
-    . B
-    . B
-        AA. B
-        . B
-            . B
-            . B
-            . B
-            . B
-# define list
+
+# List
+## Un-ordered Lists
+-   using lists
+    - look inner list
+-   another list
+    - nice 
+    - oga
+        - oga
+            - oga
+            - oga
+            - oga
+            - oga
+            - oga
+            - oga
+            - oga
+            - oga
+        - oga
+    - boga
+-   yet another list
+
+## Ordered Lists
+1. This is one
+.  u give the first char and the list takes care of the rest
+.  inner lists too
+    15. smthing like this
+    16. no like this
+    . auto
+    A. cant say anything
+        BBV. ?
+        . ?
+        . ?
+        . ?
+        . ?
+        . ?
+    .  wherever happens
+
+# Text Style
 """.strip()
 
 
@@ -51,22 +59,3 @@ parser.print_tree(parser.head)
 
 
 
-
-
-
-# <AstElm type=AstType.head 
-#     content=[
-#         <AstElm type=AstType.list_container 
-#             content=[
-#                 <AstElm type=AstType.unordered_list 
-#                 content=<AstElm type=AstType.text content=using lists> 
-#                 data={'depth': 0, 
-#                 'inner': 
-#                     <AstElm type=AstType.list_container 
-#                         content=[
-#                             <AstElm type=AstType.unordered_list 
-#                             content=<AstElm type=AstType.text content=look inner list 1> data={'depth': 1, 'inner': None}>]>}>]>, 
-#                     <AstElm type=AstType.list_container 
-#                         content=[
-#                             <AstElm type=AstType.unordered_list 
-#                         content=<AstElm type=AstType.text content=look inner list 1> data={'depth': 0, 'inner': None}>]>]>

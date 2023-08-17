@@ -2,6 +2,17 @@ from enum import Enum, auto
 from keyboger_tokenizer import TokenType
 
 
+# used for ordered lists
+# like converting from base 10 to base 16
+# but from base 10 to base letters xd
+def html_letter_mapping(number):
+    out = ""
+    while number >= 0:
+        out += chr(number % 26 + ord("a"))
+        number //= 26
+        number -= 1
+    return out[::-1]
+
 class AstType(Enum):
     head = auto()
     text = auto()
@@ -166,7 +177,6 @@ class KeybogerParser:
 
 
     def parse_list(self,tkn):
-        correct = True
         if tkn.typ == TokenType.unordered_list:
             lists = []
             # if typ == tab that means we are in a inner loop
@@ -181,7 +191,6 @@ class KeybogerParser:
                 
                 # FIXME: maybe there are correct lists fix this
                 if not self.far_peek(TokenType.unordered_list):
-                    correct = False
                     break
                 
                 # remove "-"
@@ -209,20 +218,25 @@ class KeybogerParser:
             
             # FIXME: done like how i remove one
             self.cur -= 1
-            if correct:
-                lists = self.merge_lists(lists)
-                return AstElement(AstType.list_container,lists)  
+            
+            lists = self.merge_lists(lists)
+            return AstElement(AstType.list_container,lists)  
         
         return self.parse_ordered_list(tkn)    
 
     def merge_ordered_lists(self,lists):
         idx = [0]
 
+        # idxer type
+        def idxer_typ(idxer):
+            typ = "1"
+            if idxer.isalpha():
+                typ = "A" if idxer.isupper() else "a"
+            return typ
         # create a correct idx accourding to prev value
         def parse_counter(counter,prev):
-            typ = "1"
-            if prev.isalpha():
-                typ = "A" if prev.isupper() else "a"
+            # get idxer type A a 1
+            typ = idxer_typ(prev)
 
             start = counter
             if typ != "1":
@@ -232,18 +246,12 @@ class KeybogerParser:
                 # counts how many letters
                 c = 0
                 for char in prev_idxer[::-1]:
-                    diff = ord(char) - ord('a') + 1
+                    diff = ord(char) - ord('a') + 1 
                     start +=  diff * 26 ** c
                     c += 1
 
-                idxer = ""
-                s = start + 1
-                while s != 0:
-                    idxer += chr(s%26 + ord("a") - 1)
-                    s //= 26   
-
-                # reverse for bigger idxer like AA,AB...
-                idxer = idxer[::-1]
+                # convert number to letter
+                idxer = html_letter_mapping(start)
 
                 # keep upper and lower the same
                 if prev.isupper(): idxer = idxer.upper() 
@@ -255,22 +263,31 @@ class KeybogerParser:
             return typ ,  start  , idxer
 
         # trying to fix idxing here
-        def merge_idxer(depth = 0,prev="1"):
-            counter = 1
+        def merge_idxer(depth = 0,prev=""):
+            counter = 0
             while idx[0] < len(lists):
                 if lists[idx[0]].data["depth"] != depth:
                     if lists[idx[0]].data["depth"] > depth:
                         merge_idxer(depth + 1)
                     else:
+                        # let lower lvl deal with it
+                        idx[0] -= 1
                         return
                 elif lists[idx[0]].data["idxer"] == "":
+                    # first element in list
+                    if prev == "":
+                        lists[idx[0]].data["start"] = 1 
+                        lists[idx[0]].data["typ"] = "1" 
+                        lists[idx [0]].data["idxer"] = "1" 
+                        prev = "1"
+                    else:
+                        typ , start , idxer = parse_counter(counter,prev)
+                        # print("-> ",lists[idx[0]].data["idxer"],counter,typ,start,prev)
+                        lists[idx[0]].data["start"] = start 
+                        lists[idx[0]].data["typ"] = typ 
+                        lists[idx[0]].data["idxer"] = idxer 
 
-                    typ , start , prev = parse_counter(counter,prev)
-                    lists[idx[0]].data["start"] = start 
-                    lists[idx[0]].data["typ"] = typ 
-                    lists[idx[0]].data["idxer"] = prev 
-
-                    
+                        prev = idxer
                 else:
                     if idx[0] < len(lists):
                         prev = lists[idx[0]].data["idxer"] 
@@ -282,7 +299,6 @@ class KeybogerParser:
         return self.merge_lists(merge_idxer())
 
     def parse_ordered_list(self,tkn):
-        correct = True
         if tkn.typ == TokenType.ordered_list or tkn.typ == TokenType.list_idxer:
             lists = []
             while tkn.typ == TokenType.ordered_list or tkn.typ == TokenType.list_idxer or  tkn.typ == TokenType.tab:
@@ -302,7 +318,6 @@ class KeybogerParser:
 
 
                 if not self.far_peek(TokenType.ordered_list):
-                    correct = False
                     break
                 
 
@@ -332,9 +347,8 @@ class KeybogerParser:
 
             # FIXME: done like how i remove one
             self.cur -= 1
-            if correct:
-                lists = self.merge_ordered_lists(lists)
-                return AstElement(AstType.list_container,lists)  
+            lists = self.merge_ordered_lists(lists)
+            return AstElement(AstType.list_container,lists)  
         
         return self.parse_macro(tkn)          
 
@@ -449,7 +463,7 @@ class KeybogerParser:
             if ast.data["inner"]:
                 self.print_tree(ast.data["inner"])
         elif ast.typ == AstType.ordered_list:
-            print("   " * ast.data["depth"] + str(ast.data["idxer"]) +".",end="")
+            print("   " * ast.data["depth"] + str(ast.data["idxer"]) +". ",end="")
             self.print_tree(ast.content)
             print()
             if ast.data["inner"]:
