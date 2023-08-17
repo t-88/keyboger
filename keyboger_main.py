@@ -6,19 +6,35 @@ from keyboger_parser import KeybogerParser , AstType
 
 src = r"""
 # define
-\- (2)
-- (3)
-    - (4)
-        - (5)
-        - (5)
-        - (5)
+1. 1
+. 2
+    a. 3
+    . 3
+    . 4
+    . 3
+        A. 3
+        B. 3
+        . 3
+        . 3
+            2. 3
+                2. 3
+                3. 3
+                . 3
+                8. 3
+                . 3
+                . 3
+# define inerr
+. A
+    . B
+    . B
+    . B
+        AA. B
+        . B
+            . B
+            . B
+            . B
+            . B
 # define list
-- (5)
-    - (5)
-        - (5)
-        - (5)
-- (5)
-- (6)
 """.strip()
 
 

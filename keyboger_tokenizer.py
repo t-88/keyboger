@@ -11,6 +11,10 @@ class TokenType(Enum):
     hashtag = auto()
     unordered_list = auto()
     tab = auto()
+
+    list_idxer= auto()
+    ordered_list = auto()
+
     
     eof = auto()
     count = auto()
@@ -151,6 +155,21 @@ class KeybogerTokenizer:
             if cur == "#": return True , cur
             elif cur == "-": return True , cur
             elif cur == "\t": return True , cur
+            elif cur == ".": return True , cur
+            elif cur.isalnum():
+                # dont like to u use 'find'
+                # get idx of point
+                idx_of_p = self.peek_line()[1].find(".",self.col)
+                # sub string now
+                str_slice =  self.peek_line()[1][self.col:idx_of_p]
+                # check if there is space
+                if " " in str_slice: return False , cur
+
+                # either contains only number or only letters
+                if str_slice.isnumeric() or str_slice.isalpha():
+                    return True , cur
+
+
 
         return False , cur
     
@@ -186,6 +205,21 @@ class KeybogerTokenizer:
         elif cur == "\t":
             self.add_tkn(TokenType.tab,"\t")
 
+        # if its alnum that means its a list-idxer
+        # i restart the process of getting sub-string
+        # FIXME: dont restart??
+        elif cur.isalnum():
+            idx_of_p = self.peek_line()[1].find(".",self.col)
+            str_slice =  self.peek_line()[1][self.col:idx_of_p]
+
+            self.add_tkn(TokenType.list_idxer,str_slice)
+            self.add_tkn(TokenType.ordered_list,".")
+            
+            # pass the "."
+            for i in range(len(str_slice)):
+                self.inc()
+        elif cur == ".":
+            self.add_tkn(TokenType.ordered_list,".")
         
         else:  
             assert False , "Unreachable"

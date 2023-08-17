@@ -8,8 +8,9 @@ class AstType(Enum):
     new_line = auto()
     header = auto()
     inline_macro = auto()
-    unordered_list = auto()
     list_container = auto()
+    unordered_list = auto()
+    ordered_list = auto()
 
 macros_ids = [
     "link",
@@ -162,6 +163,8 @@ class KeybogerParser:
         
         return inner_merge_list()
     
+
+
     def parse_list(self,tkn):
         correct = True
         if tkn.typ == TokenType.unordered_list:
@@ -181,10 +184,9 @@ class KeybogerParser:
                     correct = False
                     break
                 
-
                 # remove "-"
                 self.inc()
-                content_ast = self.parse_macro(self.peek_tkn())
+                content_ast = self.parse_list(self.peek_tkn())
                 # strip additional spaces
                 if content_ast.typ == AstType.text: 
                     content_ast.content = content_ast.content.strip()
@@ -211,7 +213,130 @@ class KeybogerParser:
                 lists = self.merge_lists(lists)
                 return AstElement(AstType.list_container,lists)  
         
-        return self.parse_macro(tkn)    
+        return self.parse_ordered_list(tkn)    
+
+    def merge_ordered_lists(self,lists):
+        idx = [0]
+
+        # create a correct idx accourding to prev value
+        def parse_counter(counter,prev):
+            typ = "1"
+            if prev.isalpha():
+                typ = "A" if prev.isupper() else "a"
+
+            start = counter
+            if typ != "1":
+                # final start value
+                start = 0
+                prev_idxer = prev.lower()
+                # counts how many letters
+                c = 0
+                for char in prev_idxer[::-1]:
+                    diff = ord(char) - ord('a') + 1
+                    start +=  diff * 26 ** c
+                    c += 1
+
+                idxer = ""
+                s = start + 1
+                while s != 0:
+                    idxer += chr(s%26 + ord("a") - 1)
+                    s //= 26   
+
+                # reverse for bigger idxer like AA,AB...
+                idxer = idxer[::-1]
+
+                # keep upper and lower the same
+                if prev.isupper(): idxer = idxer.upper() 
+            else:
+                # or its a integer in that case add one
+                idxer = str(int(prev) +  1)
+
+
+            return typ ,  start  , idxer
+
+        # trying to fix idxing here
+        def merge_idxer(depth = 0,prev="1"):
+            counter = 1
+            while idx[0] < len(lists):
+                if lists[idx[0]].data["depth"] != depth:
+                    if lists[idx[0]].data["depth"] > depth:
+                        merge_idxer(depth + 1)
+                    else:
+                        return
+                elif lists[idx[0]].data["idxer"] == "":
+
+                    typ , start , prev = parse_counter(counter,prev)
+                    lists[idx[0]].data["start"] = start 
+                    lists[idx[0]].data["typ"] = typ 
+                    lists[idx[0]].data["idxer"] = prev 
+
+                    
+                else:
+                    if idx[0] < len(lists):
+                        prev = lists[idx[0]].data["idxer"] 
+                counter += 1
+                idx[0] += 1
+            return lists
+
+        
+        return self.merge_lists(merge_idxer())
+
+    def parse_ordered_list(self,tkn):
+        correct = True
+        if tkn.typ == TokenType.ordered_list or tkn.typ == TokenType.list_idxer:
+            lists = []
+            while tkn.typ == TokenType.ordered_list or tkn.typ == TokenType.list_idxer or  tkn.typ == TokenType.tab:
+                # calc the depth using tabs
+                depth = 0
+                if tkn.typ == TokenType.tab:
+                    while self.far_peek(TokenType.tab):
+                        depth += 1
+                        self.inc()
+
+                    _ , tkn = self.peek() 
+
+                idxer = ""
+                if tkn.typ == TokenType.list_idxer:
+                    idxer = tkn.val
+                    self.inc()
+
+
+                if not self.far_peek(TokenType.ordered_list):
+                    correct = False
+                    break
+                
+
+                # remove "."
+                self.inc()
+                content_ast = self.parse_list(self.peek_tkn())
+                # strip additional spaces
+                if content_ast.typ == AstType.text: 
+                    content_ast.content = content_ast.content.strip()
+                self.inc()
+
+
+                # save list element
+                lists.append(
+                    AstElement(AstType.ordered_list,content_ast,data={"idxer":idxer,"depth":depth,"inner":[]})
+                    )
+
+                # lists take the whole line
+                if self.far_peek(TokenType.new_line):
+                    # consume the new-line
+                    self.inc()
+                else: assert False , "Unreachable" 
+
+
+                eof , tkn = self.peek()
+                if eof: break
+
+            # FIXME: done like how i remove one
+            self.cur -= 1
+            if correct:
+                lists = self.merge_ordered_lists(lists)
+                return AstElement(AstType.list_container,lists)  
+        
+        return self.parse_macro(tkn)          
 
     def parse_macro(self,tkn):
         if tkn.typ == TokenType.macro_start:
@@ -318,12 +443,19 @@ class KeybogerParser:
             for elem in ast.content:
                 self.print_tree(elem)
         elif ast.typ == AstType.unordered_list:
-            # print(f"List-Elem: {ast.data['depth']}"+"   " * ast.data["depth"],end="")
             print("   " * ast.data["depth"],end="")
             self.print_tree(ast.content)
             print()
             if ast.data["inner"]:
                 self.print_tree(ast.data["inner"])
+        elif ast.typ == AstType.ordered_list:
+            print("   " * ast.data["depth"] + str(ast.data["idxer"]) +".",end="")
+            self.print_tree(ast.content)
+            print()
+            if ast.data["inner"]:
+                self.print_tree(ast.data["inner"])
+            
+        
         else:
             assert False , f"Unreachable {ast}"
 
@@ -332,11 +464,15 @@ class KeybogerParser:
         if ast.typ == AstType.list_container:
             print("container:")
             for elem in ast.content:
-                print_lists(elem)
+                self.print_lists(elem)
         elif ast.typ == AstType.unordered_list:
             print(ast.data["depth"],ast.content)        
             if ast.data["inner"]:
-                print_lists(ast.data["inner"])
+                self.print_lists(ast.data["inner"])
+        elif ast.typ == AstType.ordered_list:
+            print(ast.data["depth"],ast.content)        
+            if ast.data["inner"]:
+                self.print_lists(ast.data["inner"])                
 
             
         
