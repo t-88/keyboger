@@ -2,22 +2,12 @@
 
 from keyboger_tokenizer import KeybogerTokenizer
 from keyboger_parser import KeybogerParser , AstType
+from keyboger_trans_html import KeybogerHtmlTranspiler
 
-
-src = r"""
-# Code blocks
-same as markdown: ``` print("Wats Up") ``` **bold** ad
-a **bold**
-
-# Code blocks
-same as markdown: ``` print("Wats Up") ```
-
-
-## Macros
-macros handle state or moving parts, maybe animation cant say for sure,
-smthing like a blog preview title tree
-:[make :: tree]:
-""".strip()
+src = ""
+file_path = "syntax-preview/main.bl"
+with open(file_path,"r") as f:
+    src = f.read().strip()
 
 
 # print(src)
@@ -29,7 +19,11 @@ tknzer.tokenize(src,is_src = True)
 
 parser = KeybogerParser()
 parser.parse(tknzer.tknz)
-parser.print_tree(parser.head)
+
+
+transpiler =  KeybogerHtmlTranspiler(parser.setting)
+transpiler.start_transpiling(parser.head)
+transpiler.save("syntax-preview")
 
 
 

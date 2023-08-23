@@ -13,27 +13,27 @@ u can use online imgs like this python logo:
 :[img::python-logo::https://www.python.org/static/img/python-logo.png]:
 or local imgs that are in the same dir: :[local-img::beverage.png]:
 img from :[link::flaticon::https://www.flaticon.com/free-icon/beverage_11651492?related_id=11651492&origin=pack]:
-or as variable using macros:  
-:[local-img::computer]: 
+or as variable using macros:   :[local-img::computer]:  
+:[local-img::computer::computer-engineer.png]: 
 
 # List
 ## Un-ordered Lists
 -   using lists
-    -- look inner list
+    - look inner list
 -   another list
-    -- nice 
-    -- oga
-        --- oga
-            ---- oga
-            ----- oga
-            ----- oga
-            ----- oga
-            ------ oga
-            ------ oga
-            ------- oga
-            ----- oga
-        --- oga
-    -- boga
+    - nice 
+    - oga
+        - oga
+            - oga
+            - oga
+            - oga
+            - oga
+            - oga
+            - oga
+            - oga
+            - oga
+        - oga
+    - boga
 -   yet another list
 
 ## Ordered Lists
@@ -43,7 +43,7 @@ or as variable using macros:
     15. smthing like this
     16. no like this
     . auto
-    A. cant say anything
+    . cant say anything
         BBV. ?
         . ?
         . ?
@@ -54,7 +54,7 @@ or as variable using macros:
 
 # Text Style
 *bold* text is kinda nice and **italic** too, whats better is ***italic-bold***.
-maybe add :[color::#FF00FF::Colors]: to text
+maybe add :[css::"color:red;"::color]: to text
 
 # Code blocks
 same as markdown: ``` print("Wats Up") ```
@@ -62,5 +62,5 @@ same as markdown: ``` print("Wats Up") ```
 # Macros
 macros handle state or moving parts, maybe animation cant say for sure,
 smthing like a blog preview title  tree
-[make ::s tree]
+[make :: tree]
 

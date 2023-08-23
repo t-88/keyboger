@@ -1,3 +1,5 @@
+import os
+import datetime
 from enum import Enum, auto
 from keyboger_tokenizer import TokenType
 
@@ -30,7 +32,7 @@ macros_ids = [
     "link",
     "img",
     "local-img",
-    "color",
+    "css",
     "make",
 ]
 
@@ -61,8 +63,52 @@ class AstElement:
 class Keyboger_Setting:
     def __init__(self):
         self.macros = []
+        self.dir_name = "tmp-" + str(datetime.datetime.now())
+        self.online_imgs = {}
+        self.local_imgs =  {}
+        self.links = {}
+
+
     def append_macro(self,src):
         self.macros.append(src)
+    
+
+    def __repr__(self):
+        return "macros: \n\t" + str(self.dir_name) + "\n\t" + str(self.imgs) +"\n\t" + str(self.links)
+    def __str__(self):
+        return self.__repr__()
+        
+    def parse(self):
+        for macro in self.macros:
+            self.parse_append(macro)
+
+    def parse_append(self,macro):
+        splited = macro.split(":")
+        typ = splited[0].strip()
+        args = [val.strip() for val in  splited[1:]]
+        if typ == "dir-name":
+            self.dir_name = args[0]
+        elif typ == "img":
+            if len(args) == 3:
+                # type (local,online) name link
+                if args[0] == "local":
+                    self.local_imgs[args[1]] = args[2]
+                else:
+                    self.online_imgs[args[1]] = args[2]
+            elif len(args) == 2:
+                #NOTE: assume that its online
+                self.online_imgs[args[0]] = args[1]
+            elif len(args) == 1:
+                assert False , f"no point of using img macro if there is only link in it {typ} {args}"
+        elif typ == "link":
+            #TODO:fix this garbage change macro separate char?
+            # if its a link then its splited
+            self.links[args[0]] = args[1] +":"+ args[2]
+        else:
+            assert False , "Unexpected Macros Type To parse"
+
+
+
 
 class KeybogerParser:
     def __init__(self,tknz = []):
@@ -151,6 +197,7 @@ class KeybogerParser:
 
         # mergin text blocks
         self.sum_up_text()
+        self.setting.parse()
 
         # print(self.setting.macros)
         # for elem in self.head.content:
@@ -299,7 +346,8 @@ class KeybogerParser:
                         prev = idxer
                 else:
                     if idx[0] < len(lists):
-                        prev = lists[idx[0]].data["idxer"] 
+                        prev = lists[idx[0]].data["idxer"]
+                        lists[idx[0]].data["typ"] = idxer_typ(prev) 
                 counter += 1
                 idx[0] += 1
             return lists
@@ -504,7 +552,7 @@ class KeybogerParser:
 
 
                 if count == check_count:
-                    return AstElement(AstType.text,content=text.val,data=text_style[count])
+                    return AstElement(AstType.text,content=text.val,data=text_style[count - 1])
 
         self.cur = wayback
         return self.parse_text(wayback_tkn)

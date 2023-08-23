@@ -45,7 +45,6 @@ h1::after, h2::after, h3::after , h4::after, h5::after , h6::after {
     content: " ";
     display: block;
     border: solid 1px #181818; 
-    margin-top: 5px;
     min-width: inherit;
 }
 
@@ -104,4 +103,9 @@ a:hover {
 
 li {
     margin: 15px 0;
+}
+
+p {
+    display: inline;
+    line-height: 2;
 }
