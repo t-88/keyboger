@@ -15,6 +15,7 @@ class TokenType(Enum):
     list_idxer= auto()
     ordered_list = auto()
 
+    star = auto()
     
     eof = auto()
     count = auto()
@@ -149,6 +150,7 @@ class KeybogerTokenizer:
         
         elif cur == "[": return True , cur
         elif cur == "]": return True , cur
+        elif cur == "*": return True , cur
 
         # headers
         elif self.first_in_line:
@@ -204,6 +206,10 @@ class KeybogerTokenizer:
             self.add_tkn(TokenType.unordered_list,"-")
         elif cur == "\t":
             self.add_tkn(TokenType.tab,"\t")
+
+        elif cur == "*":
+            self.add_tkn(TokenType.star,"*")
+
 
         # if its alnum that means its a list-idxer
         # i restart the process of getting sub-string

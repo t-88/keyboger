@@ -5,44 +5,9 @@ from keyboger_parser import KeybogerParser , AstType
 
 
 src = r"""
-
-# List
-## Un-ordered Lists
--   using lists
-    - look inner list
--   another list
-    - nice 
-    - oga
-        - oga
-            - oga
-            - oga
-            - oga
-            - oga
-            - oga
-            - oga
-            - oga
-            - oga
-        - oga
-    - boga
--   yet another list
-
-## Ordered Lists
-1. This is one
-.  u give the first char and the list takes care of the rest
-.  inner lists too
-    15. smthing like this
-    16. no like this
-    . auto
-    A. cant say anything
-        BBV. ?
-        . ?
-        . ?
-        . ?
-        . ?
-        . ?
-    .  wherever happens
-
 # Text Style
+*bold* text is kinda nice and **italic** too, whats better is ***italic-bold***.
+maybe add :[color::#FF00FF::Colors]: to text
 """.strip()
 
 

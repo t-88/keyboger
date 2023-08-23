@@ -2,6 +2,8 @@ from enum import Enum, auto
 from keyboger_tokenizer import TokenType
 
 
+# TODO: lists cant have links or imgs fix 
+
 # used for ordered lists
 # like converting from base 10 to base 16
 # but from base 10 to base letters xd
@@ -27,6 +29,7 @@ macros_ids = [
     "link",
     "img",
     "local-img",
+    "color",
 ]
 
 class AstElement:
@@ -97,20 +100,18 @@ class KeybogerParser:
         return overflow , tkn
     
     
-
-    
-
     # mergin text asts together in-case of bad synatx 
     def sum_up_text(self):
         idx = 0
 
         while idx < len(self.head.content):
-            if self.head.content[idx].typ == AstType.text:
+            if self.head.content[idx].typ == AstType.text and len(self.head.content[idx].data) == 0 :
                 start_idx = idx
                 content = ""
                 while idx < len(self.head.content) and self.head.content[idx].typ == AstType.text:
                     content += self.head.content[idx].content
                     idx += 1
+
 
                 # mergin the ast
                 self.head.content = self.head.content[0:start_idx] + [AstElement(AstType.text,content)] + self.head.content[idx:]
@@ -408,10 +409,35 @@ class KeybogerParser:
                 # in-case wrong syntax
                 self.cur = wayback
 
+        return self.parse_bold_text(tkn)
+
+    def parse_bold_text(self,tkn):
+        wayback = self.cur 
+        if tkn.typ == TokenType.star:
+            count = 0
+            self.inc()
+            while tkn.typ == TokenType.star:
+                count += 1
+                _ , tkn = self.inc()
+
+            text = tkn
+            _ , tkn = self.inc()
+
+            if tkn.typ == TokenType.star:
+                check_count = 1
+                while tkn.typ == TokenType.star and check_count <  count :
+                    self.inc()
+                    check_count += 1
+                    _ , tkn = self.peek()
+                
+                #TODO: not clean
+                # go back one step, while loop reachs to next token
+                self.cur -= 1
+
+                if count == check_count:
+                    return AstElement(AstType.text,content=text.val,data={"bold": True})
+        self.cur = wayback
         return self.parse_new_line(tkn)
-
-
-    
     def parse_new_line(self,tkn):
         if tkn.typ == TokenType.new_line:
             return AstElement(AstType.new_line)    
@@ -450,7 +476,10 @@ class KeybogerParser:
         elif ast.typ == AstType.inline_macro:
             print("\033[34m" +ast.data["id"] + "\033[0m",end="")
         elif ast.typ == AstType.text:
-            print(ast.content,end="")
+            if "bold" in ast.data:
+                print(f"\033[97m{ast.content}\033[0m",end="")
+            else:
+                print(ast.content,end="")
         elif ast.typ == AstType.new_line:
             print()
         elif ast.typ == AstType.list_container:
