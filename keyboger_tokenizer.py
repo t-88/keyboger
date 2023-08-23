@@ -16,6 +16,7 @@ class TokenType(Enum):
     ordered_list = auto()
 
     star = auto()
+    back_tick = auto()
     
     eof = auto()
     count = auto()
@@ -151,6 +152,7 @@ class KeybogerTokenizer:
         elif cur == "[": return True , cur
         elif cur == "]": return True , cur
         elif cur == "*": return True , cur
+        elif cur == "`": return True , cur
 
         # headers
         elif self.first_in_line:
@@ -209,6 +211,9 @@ class KeybogerTokenizer:
 
         elif cur == "*":
             self.add_tkn(TokenType.star,"*")
+
+        elif cur == "`":
+            self.add_tkn(TokenType.back_tick,"`")
 
 
         # if its alnum that means its a list-idxer
@@ -304,7 +309,7 @@ class KeybogerTokenizer:
             self.first_in_line = True
             self.row += 1
 
-            self.add_tkn(TokenType.new_line)
+            self.add_tkn(TokenType.new_line,"\n")
         self.add_tkn(TokenType.eof)
 
         

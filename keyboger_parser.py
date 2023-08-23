@@ -24,12 +24,20 @@ class AstType(Enum):
     list_container = auto()
     unordered_list = auto()
     ordered_list = auto()
+    code =  auto()
 
 macros_ids = [
     "link",
     "img",
     "local-img",
     "color",
+    "make",
+]
+
+text_style = [
+    {"bold": True},
+    {"italic": True},
+    {"bold": True,"italic": True}
 ]
 
 class AstElement:
@@ -108,7 +116,7 @@ class KeybogerParser:
             if self.head.content[idx].typ == AstType.text and len(self.head.content[idx].data) == 0 :
                 start_idx = idx
                 content = ""
-                while idx < len(self.head.content) and self.head.content[idx].typ == AstType.text:
+                while idx < len(self.head.content) and self.head.content[idx].typ == AstType.text and len(self.head.content[idx].data) == 0:
                     content += self.head.content[idx].content
                     idx += 1
 
@@ -372,9 +380,11 @@ class KeybogerParser:
     
     # inline macros
     def parse_inline_macro(self,tkn):
+        wayback = self.cur
+        wayback_tkn = tkn
+        
         if tkn.typ == TokenType.inline_macro_start:
             correct = True
-            wayback = self.cur
             self.inc()
 
             # parsing the first element 'id' 
@@ -383,10 +393,11 @@ class KeybogerParser:
             content = [ ]
 
             macro_id = ""
-            if next_tkn.val in macros_ids:
+            if next_tkn.val.strip() in macros_ids:
                 macro_id = self.parse_macro(next_tkn).content
             else:
                 correct = False
+
             
             # now we expect :: 
             # it will short-circuit giving me false so i skip
@@ -402,48 +413,18 @@ class KeybogerParser:
     
                 if self.far_peek(TokenType.inline_macro_end):
                     return AstElement(AstType.inline_macro,content,data={"id":macro_id})
-                else:
-                    correct = False
             
-            if not correct:
-                # in-case wrong syntax
-                self.cur = wayback
-
-        return self.parse_bold_text(tkn)
-
-    def parse_bold_text(self,tkn):
-        wayback = self.cur 
-        if tkn.typ == TokenType.star:
-            count = 0
-            self.inc()
-            while tkn.typ == TokenType.star:
-                count += 1
-                _ , tkn = self.inc()
-
-            text = tkn
-            _ , tkn = self.inc()
-
-            if tkn.typ == TokenType.star:
-                check_count = 1
-                while tkn.typ == TokenType.star and check_count <  count :
-                    self.inc()
-                    check_count += 1
-                    _ , tkn = self.peek()
-                
-                #TODO: not clean
-                # go back one step, while loop reachs to next token
-                self.cur -= 1
-
-                if count == check_count:
-                    return AstElement(AstType.text,content=text.val,data={"bold": True})
         self.cur = wayback
+        tkn = wayback_tkn
         return self.parse_new_line(tkn)
+
     def parse_new_line(self,tkn):
         if tkn.typ == TokenType.new_line:
             return AstElement(AstType.new_line)    
         
         return self.parse_header(tkn)
     
+
     def parse_header(self,tkn):
         if tkn.typ == TokenType.hashtag:
             self.inc()
@@ -458,7 +439,76 @@ class KeybogerParser:
 
             return AstElement(AstType.header,content,data={"depth":counter}) 
 
-        return self.parse_text(tkn)
+        return self.parse_code_blk(tkn)
+
+    def parse_code_blk(self,tkn):
+        wayback = self.cur 
+        wayback_tkn = tkn
+
+
+        if tkn.typ == TokenType.back_tick:
+            count = 0
+            self.inc()
+            while tkn.typ == TokenType.back_tick:
+                count += 1
+                _ , tkn = self.inc()
+            
+            if count == 3:
+                code = ""
+                while tkn.typ != TokenType.back_tick:
+                    code += tkn.val
+                    _ , tkn = self.inc()
+                
+                #TODO: check eof
+                check_count = 1
+                while tkn.typ == TokenType.back_tick and check_count < 3:
+                    self.inc()
+                    check_count += 1
+                    _ , tkn = self.peek()
+
+                if check_count == 3:
+                    self.cur -= 1
+
+                    return AstElement(AstType.code,code) 
+
+        self.cur = wayback
+        return self.parse_bold_text(wayback_tkn)
+
+    def parse_bold_text(self,tkn):
+        wayback = self.cur 
+        wayback_tkn = tkn
+
+
+        if tkn.typ == TokenType.star:
+            count = 0
+            self.inc()
+            while tkn.typ == TokenType.star:
+                count += 1
+                _ , tkn = self.inc()
+
+
+
+            text = tkn
+            _ , tkn = self.inc()
+
+            if tkn.typ == TokenType.star:                
+                check_count = 1
+                while tkn.typ == TokenType.star and check_count <  count :
+                    self.inc()
+                    check_count += 1
+                    _ , tkn = self.peek()
+                
+                #TODO: not clean
+                # go back one step, while loop reachs to next token
+                self.cur -= 1
+
+
+                if count == check_count:
+                    return AstElement(AstType.text,content=text.val,data=text_style[count])
+
+        self.cur = wayback
+        return self.parse_text(wayback_tkn)
+    
 
     def parse_text(self,tkn):
         # making ast_text_elements
@@ -498,6 +548,9 @@ class KeybogerParser:
             if ast.data["inner"]:
                 self.print_tree(ast.data["inner"])
             
+        elif ast.typ == AstType.code:
+            
+            print("\033[31m" +ast.content + "\033[0m",end="")
         
         else:
             assert False , f"Unreachable {ast}"

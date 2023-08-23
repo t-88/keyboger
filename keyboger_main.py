@@ -5,9 +5,18 @@ from keyboger_parser import KeybogerParser , AstType
 
 
 src = r"""
-# Text Style
-*bold* text is kinda nice and **italic** too, whats better is ***italic-bold***.
-maybe add :[color::#FF00FF::Colors]: to text
+# Code blocks
+same as markdown: ``` print("Wats Up") ``` **bold** ad
+a **bold**
+
+# Code blocks
+same as markdown: ``` print("Wats Up") ```
+
+
+## Macros
+macros handle state or moving parts, maybe animation cant say for sure,
+smthing like a blog preview title tree
+:[make :: tree]:
 """.strip()
 
 
