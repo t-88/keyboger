@@ -1,0 +1,48 @@
+
+
+#main-menu-header {
+    justify-content: space-between;
+}
+#blog-name {
+    font-size: 50px;
+    font-weight: bold;
+}
+
+#personal-links {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: fit-content;
+}
+#personal-links a {
+    margin: 0 10px;
+}
+
+#main-menu-body {
+    width: 80%;
+    margin: auto;
+    font-size: 30px;
+
+}
+
+#blogs {
+    width: 100%;
+    height: fit-content;
+
+    padding: 20px 60px;
+
+}
+
+#blogs p {
+    font-size: 25px;
+}
+#blogs a {
+    font-weight: normal;
+    display: inline-block;
+    margin-bottom: 30px;
+    font-size: 30px;
+}
+#blogs a:hover {
+    font-weight: bold;
+}

@@ -28,13 +28,21 @@ class AstType(Enum):
     ordered_list = auto()
     code =  auto()
 
-macros_ids = [
+inline_macros_ids = [
     "link",
     "img",
     "local-img",
     "css",
     "make",
 ]
+
+macros_ids = [
+    "blog-title",
+    "dir-name",
+    "img",
+    "link",
+]
+
 
 text_style = [
     {"bold": True},
@@ -64,6 +72,10 @@ class Keyboger_Setting:
     def __init__(self):
         self.macros = []
         self.dir_name = "tmp-" + str(datetime.datetime.now())
+
+        self.blog_title = self.dir_name 
+        self.is_there_blog_title = False
+
         self.online_imgs = {}
         self.local_imgs =  {}
         self.links = {}
@@ -82,12 +94,19 @@ class Keyboger_Setting:
         for macro in self.macros:
             self.parse_append(macro)
 
+
+
+
     def parse_append(self,macro):
         splited = macro.split(":")
         typ = splited[0].strip()
         args = [val.strip() for val in  splited[1:]]
         if typ == "dir-name":
             self.dir_name = args[0]
+            if not self.is_there_blog_title:
+                self.blog_title = self.dir_name
+        elif typ == "blog-title":
+                self.blog_title = args[0]
         elif typ == "img":
             if len(args) == 3:
                 # type (local,online) name link
@@ -410,6 +429,8 @@ class KeybogerParser:
         return self.parse_macro(tkn)          
 
     def parse_macro(self,tkn):
+        wayback = self.cur
+        wayback_tkn = tkn 
         if tkn.typ == TokenType.macro_start:
             # if we find text and macro end that means
             # that this macro is correct
@@ -418,11 +439,17 @@ class KeybogerParser:
                 self.inc()
 
                 _ , tkn  = self.inc()
-                self.setting.append_macro(tkn.val)
 
-                self.inc()
-                return 
+                # getting the macro id aka the first element in macro [id:args]
+                if tkn.val.split(":")[0].strip() in macros_ids:
+                    self.setting.append_macro(tkn.val)
+
+                    self.inc()
+                    return 
     
+
+        self.cur = wayback 
+        tkn = wayback_tkn 
         # this macro syntax is wrong so we will just treat it as text
         return self.parse_inline_macro(tkn)
     
@@ -441,7 +468,7 @@ class KeybogerParser:
             content = [ ]
 
             macro_id = ""
-            if next_tkn.val.strip() in macros_ids:
+            if next_tkn.val.strip() in inline_macros_ids:
                 macro_id = self.parse_macro(next_tkn).content
             else:
                 correct = False
