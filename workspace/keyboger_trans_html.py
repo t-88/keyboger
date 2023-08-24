@@ -284,8 +284,12 @@ class KeybogerHtmlTranspiler:
         if src != None: self.src = src
 
         # save new blog
+        if not os.path.exists(keyboger_consts.TEST_DIR):
+            os.mkdir(keyboger_consts.TEST_DIR)
+            
         if not os.path.exists(keyboger_consts.TEST_DIR + self.setting.dir_name):
             os.mkdir(keyboger_consts.TEST_DIR + self.setting.dir_name)
+
 
         about_bl = "" 
         with open(keyboger_consts.BLOGS_DIR + "about.bl","r") as f:
