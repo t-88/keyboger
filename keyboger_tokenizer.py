@@ -164,6 +164,11 @@ class KeybogerTokenizer:
                 # dont like to u use 'find'
                 # get idx of point
                 idx_of_p = self.peek_line()[1].find(".",self.col)
+
+                # false alarm no . no ordered list
+                if idx_of_p == -1:
+                    return False , cur
+
                 # sub string now
                 str_slice =  self.peek_line()[1][self.col:idx_of_p]
                 # check if there is space

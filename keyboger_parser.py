@@ -71,7 +71,7 @@ class AstElement:
 class Keyboger_Setting:
     def __init__(self):
         self.macros = []
-        self.dir_name = "tmp-" + str(datetime.datetime.now())
+        self.dir_name = "tmp-" + str(datetime.datetime.now()) + "/"
 
         self.blog_title = self.dir_name 
         self.is_there_blog_title = False

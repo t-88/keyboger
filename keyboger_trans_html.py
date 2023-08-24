@@ -4,15 +4,17 @@ import datetime
 
 from keyboger_tokenizer import KeybogerTokenizer
 from keyboger_parser import KeybogerParser , AstType
+import keyboger_consts
 
 
-def html_blog_temlplate(src):
+
+def html_blog_temlplate(src,about = ""):
     return f"""<html>
-    <head> <link rel="stylesheet" href="../src/style.css"> </head>
+    <head> <link rel="stylesheet" href="../../src/css/style.css"> </head>
     <body>
         <header> 
-            <img src="../src/pic.png" alt="profile-pic" id="img">
-            <a href="../index.html">Main-Menu</a>
+            <img src="../../src/imgs/pic.png" alt="profile-pic" id="img">
+            <a href="../../index.html">Main-Menu</a>
             <a href="https://github.com/">Github</a>
             <a href="" id="about-link">About</a>
         </header>
@@ -26,22 +28,19 @@ def html_blog_temlplate(src):
 
     <div id="about" style="display: none;">
         <div>
-            <center><h3>Place Holder About</h3></center>
-            <p>
-                here u can put ur about info...
-            </p>
+            {about}
 
             <button>close</button>
         </div>
     </div>
 
-    <script src="../src/main.js"> </script>
+    <script src="../../src/js/main.js"> </script>
 </html>"""
 
 def html_main_menu_temlplate(custom_info,blogs):
     return f"""<html>
-    <head> <link rel="stylesheet" href="src/style.css"> </head>
-    <head> <link rel="stylesheet" href="src/main_menu.css"> </head>
+    <head> <link rel="stylesheet" href="src/css/style.css"> </head>
+    <head> <link rel="stylesheet" href="src/css/main_menu.css"> </head>
     <body>
         <header id="main-menu-header"> 
             <!-- <img src="src/pic.png" alt="profile-pic" id="img"> -->
@@ -49,8 +48,8 @@ def html_main_menu_temlplate(custom_info,blogs):
                 Keyboger
             </p>
             <div id="personal-links">
-                <a href="https://github.com/"><img src="src/github-mark-white.svg" alt="" width="35px"></a>
-                <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ&ab_channel=RickAstley"><img src="src/youtube.png" alt="" width="50px"></a>
+                <a href="https://github.com/"><img src="src/imgs/github-mark-white.svg" alt="" width="35px"></a>
+                <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ&ab_channel=RickAstley"><img src="src/imgs/youtube.png" alt="" width="50px"></a>
             </div>
         </header>
         <br>
@@ -69,14 +68,27 @@ def html_main_menu_temlplate(custom_info,blogs):
 
         </div>
     </body>
+    <script src="src/js/main_menu.js"></script>
 </html>"""
 
 
+def check_files():
+    # checks for blogs_db.bl and main_menu.bl files if they exist pass else create them
+
+    # add blogs to db
+    if not os.path.exists(keyboger_consts.BLOGS_DIR + "blogs_db.bl"):
+        # create the file
+        with open(keyboger_consts.BLOGS_DIR + "blogs_db.bl","w") as f:   
+            f.write("")
+
+        
 
 class KeybogerHtmlTranspiler:
     def __init__(self,setting = None):
         self.src = ""
         self.setting = setting 
+
+        check_files()
     
     def start_transpiling(self,ast,setting = None):
         if setting:
@@ -92,14 +104,6 @@ class KeybogerHtmlTranspiler:
             self.transpile(elem)
     
 
-    def transpile_src(self,src):
-        tknzer = KeybogerTokenizer()
-        tknzer.tokenize(src,is_src = True)
-
-        parser = KeybogerParser()
-        parser.parse(tknzer.tknz)
-
-        self.start_transpiling(parser.head)
 
     # just taking print_tree function parser and replacing print by write to file
     def transpile(self,ast,depth = -1):
@@ -222,58 +226,89 @@ class KeybogerHtmlTranspiler:
         
         
         assert False , "Unreachable"
-    def save(self,src_dir):
+    
+
+
+    def save(self,src_dir,src = None):
         assert self.setting != None , "KeybogerHtmlTranspiler setting not defined"
+        if src != None: self.src = src
+
+        # if there is a file make sure that there is no same name blogs
+        blogs_src = "" 
+        with open(keyboger_consts.BLOGS_DB_PATH,"r") as f:   
+            blogs_src = f.read()
+        if f":[link::{self.setting.blog_title}::" in blogs_src:
+            print("saving blog same name error, plz change ur blog title in blogs_db.bl file")
+            assert False , "name collision plz change blog title or remove blog from blog db"
+
+
 
         # save new blog
-        if not os.path.exists("build/" + self.setting.dir_name):
-            os.mkdir("build/" + self.setting.dir_name)
-        with open("build/" + self.setting.dir_name + "/" + "index.html","w") as f:
-            f.write(html_blog_temlplate(self.src))
+        if not os.path.exists(keyboger_consts.BUILD_BLOGS_DIR + self.setting.dir_name):
+            os.mkdir(keyboger_consts.BUILD_BLOGS_DIR + self.setting.dir_name)
+
+        about_bl = "" 
+        with open(keyboger_consts.BLOGS_DIR + "about.bl","r") as f:
+            about_bl = f.read()
+        about_html = transpile_src(about_bl)
+            
+
+        with open(keyboger_consts.BUILD_BLOGS_DIR + self.setting.dir_name + "/" + "index.html","w") as f:
+            f.write(html_blog_temlplate(self.src,about_html))
+        
         # move local imgs
         for local_img in self.setting.local_imgs:
-            shutil.copy2(f"{src_dir}/{self.setting.local_imgs[local_img]}",f"build/{self.setting.dir_name}/{self.setting.local_imgs[local_img]}")
+            shutil.copy2(f"{src_dir}{self.setting.local_imgs[local_img]}",
+                         keyboger_consts.BUILD_BLOGS_DIR + self.setting.dir_name + self.setting.local_imgs[local_img])
 
-        # add blogs to db
-        if not os.path.exists("build/blogs_db.bl"):
-            with open("build/blogs_db.bl","w") as f:   
-                f.write("")
-        else:
-            # if there is a file make sure that there is no same name blogs
-            blogs_src = "" 
-            with open("build/blogs_db.bl","r") as f:   
-                blogs_src = f.read()
-
-            if f":[link::{self.setting.blog_title}::" in blogs_src:
-                print("saving blog same name error, plz change ur blog title in blogs_db.bl file")
-            
-        with open("build/blogs_db.bl","a") as f:   
-            f.write(f"[{datetime.datetime.today().strftime('%Y-%m-%d')}] :[link::{self.setting.blog_title}::./{self.setting.dir_name}]:\n")
         
+
+        # save blog in db
+        with open(keyboger_consts.BLOGS_DB_PATH,"a") as f:   
+            f.write(f"[{datetime.datetime.today().strftime('%Y-%m-%d')}] :[link::{self.setting.blog_title}::./blogs/{self.setting.dir_name}]:\n")
+
         self.update()
 
 
     def update(self):
         custom_info = ""
         blogs = ""
+        
         # update main menu
-        if os.path.exists("build/main_menu.bl"):
+        if os.path.exists(keyboger_consts.MAIN_MENU_HEADER_PATH):
             main_menu_src = ""
-
-            with open("build/main_menu.bl","r") as f:   
+            with open(keyboger_consts.MAIN_MENU_HEADER_PATH,"r") as f:   
                 main_menu_src  = f.read()
             
-            self.transpile_src(main_menu_src)
-            custom_info = self.src
-        
+            custom_info = transpile_src(main_menu_src)
 
         blogs_src = ""
-        with open("build/blogs_db.bl","r") as f:   
+        with open(keyboger_consts.BLOGS_DB_PATH,"r") as f:   
             blogs_src  = f.read()
         
-        self.transpile_src(blogs_src)
-        blogs = self.src
+        blogs = transpile_src(blogs_src)
 
 
-        with open("build/index.html","w") as f:
+        with open(keyboger_consts.BUILD_DIR +"index.html","w") as f:
             f.write(html_main_menu_temlplate(custom_info,blogs))
+
+
+
+
+
+            
+
+def transpile_src(src):
+    # takes a src and returns html
+
+    tknzer = KeybogerTokenizer()
+    tknzer.tokenize(src,is_src = True)
+    
+
+    parser = KeybogerParser()
+    parser.parse(tknzer.tknz)
+
+    transpiler = KeybogerHtmlTranspiler(parser.setting)
+    transpiler.start_transpiling(parser.head)
+
+    return transpiler.src
