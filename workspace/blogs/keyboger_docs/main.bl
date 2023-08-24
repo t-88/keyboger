@@ -1,0 +1,111 @@
+[dir-name : keyboger_docs]
+[blog-title : Keyboger Docs]
+[link : youtube : https://www.youtube.com/watch?v=dQw4w9WgXcQ&ab_channel=RickAstley]
+[img : william-osman : https://yt3.googleusercontent.com/ytc/AOPolaQ1u4vVqxC3k0LZRaIveqRIIHXqqGrPrsxXvpOufhE=s176-c-k-c0x00ffffff-no-rj]
+[img : local : warning : warning.png] 
+
+# Keyboger Docs
+## Whats keyboger
+    keyboger is meant to be a bloging engine that uses bl files as language and compiles those files to html,
+its supposed to be simpler then markdown, i think i failed but its good enought.
+
+## How To use
+-   Clone the repo using ```git clone --depth=1 git@github.com:t-88/keyboger.git```.
+-   Copy the workshop out of the repo, all the work gonna happen there
+-   Run ```$ ./keyboger_main.py```
+-   To test ur blog do ```$ ./keyboger_main.py test dir-name-for-ur-blog```
+-   this is a already build example blog for the use
+
+## Syntax:
+### Macros
+macros are used to set variables for links or imgs and maybe more and configure blog setting like dir-name for the blog to be saved in and blog-title that will show in main-menu.
+if no dir-name or blog-title are provided random ones will be chosen.
+macro synatx is ```[type : args]``` and its better if they stay up in the file.
+
+macros types are:
+1. *dir-name*  like ```[dir-name : keyboger_docs]```
+.  *blog-title* like ```[blog-title : Keyboger Docs]```
+.  *link* like ```[link : name : var]```
+.  *img*  like ```[img : name : var]``` or ```[img : local : name : var]``` for local imgs. local imgs get saved in the same path as ur website
+
+### Inline Macro
+inline macros are macros that are used with-in the the text, syntax is ```:[type :: arg1 :: arg2....]:```,
+links and imgs are in fact inline macros.
+
+inline macros types are:
+A. *link*      check down for more  
+.  *img*       check down for more
+.  *local-img* check down for more
+.  *css* like ```:[css :: "color:red; font-size: 30px" :: some text]:``` :[css :: "color:pink; font-size: 30px;" :: some-text]: its used to apply css effects on text.
+.  *make* **not implemented yet** but i will be used to create import custom html elements for ur blog, like ```:[make::tree]:``` means place a header tree in current position
+.  *in-link* **not implemented yet** but it will be used to just to places with ids, syntax like ```:[in-link :: id]:```.
+
+### Headers
+to create a header we use hashtag symbol '#' just like markdown, the number of '#' represents the priority of a header in html.
+
+### Links
+the most painfull part for me in using markdown in links, i dont why but it makes more sense to have (name)\[link] then \[name](link), that alone causes me to revert a commit.
+we can add links in keyboger using inline-macros, a inline macro is just a ```:[macro-id::arg1::arg2::...]:```.
+
+Example Uses:
+-   ```:[link::youtube::https://www.youtube.com/]:``` gives :[link::youtube::https://www.youtube.com/]:
+-   ```:[link::https://www.youtube.com/]:``` gives :[link::https://www.youtube.com/]:
+-   ```:[link::youtube]:``` it gives :[link::youtube]: here youtube is a variable defined in the top of the file 
+
+### Imgs
+imgs are like links, there is online imgs and local imgs, local imgs are given by a path and are copied over to the main website dir when converting to html its only tested on posix system tho.
+imgs synatx is ```:[img :: alt :: link]:``` 
+
+Example Uses:
+-   ```:[img::coding-train::https://yt3.googleusercontent....]:``` gives :[img::coding train::https://yt3.googleusercontent.com/99wepc_FTSN0n_GbR-FlFANyxed7TsbE8WxKIDWftdxssZlYo1-gW1CRD7cPgOzThMM8m4W8=s176-c-k-c0x00ffffff-no-rj]:
+-   ```:[img::https://www.python.org/static/img/python-logo.png]:``` gives :[img::https://www.python.org/static/img/python-logo.png]:
+-   ```:[img::william-osman]:``` it gives :[img::william-osman]: here william-osman is a variable defined in a macro in the top of the file 
+-   ```:[local-img :: checked.png]:``` gives :[local-img :: checked.png]: **checked.png** is the path for the img, btw img from :[link::flaticon::https://www.flaticon.com/free-icon/checked_190411?term=ok&page=1&position=5&origin=tag&related_id=190411]:
+-   ```:[local-img :: warning]:``` gives :[local-img :: warning]: here we used a macro. :[link:: flaticon :: https://www.flaticon.com/free-icon/warning_9392685]:
+
+
+### Lists
+keyboger supports un-ordered and ordered lists and uses tabs or 4 spaces as a depth indicator.
+-   depth 0 
+-   depth 0 
+-   depth 0 
+    -   depth 1
+    -   depth 1
+        -   mixing links too :[link :: youtube]:
+        -   depth 2
+    -   depth 1
+
+and for ordered lists u can define how a lists starts by setting the first element to a value like ```15. from 15```
+15. from 15
+. 16 comes by its self  
+. alse 17
+    . depth restarts the count from 1
+        A. also u can use letter
+        . and it will continue
+            . as long as u do it in the first element of list
+            .   another   
+            .   and another
+. and back to 18
+u will find bugs bc the system is not perfect but its good for the majority of uses.
+
+### Text Styling
+bold text can be set by using ```*bold*``` => *bold text* same for ```**italic**``` => ** italic ** and  ```***bold-italic***``` => ***bold-italic***.
+also its possible to uses css on text by using the inline macros css example of this ```:[css::"background-color:green"::colored bg]:``` => :[css::"background-color:green"::colored bg]:
+
+
+### Code Blocks
+i been using them every where, same as markdown with less features to say the least, \``` code here \``` pretty simple
+```
+    <html>
+    <body>
+    <h1>ur mom</h1>
+    </body>
+    </html>
+```
+code blocks dont respect new lines but its on the todo list :).
+
+## Special char
+u have to special char using \\
+u cant use \[ bc its used in macros u need to escape it first using \\ like \\\[, we be fixed in the future to check if the macro is correct but for now it is  what it is. 
+
+

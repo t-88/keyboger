@@ -1,3 +1,6 @@
+
+
+
 :root {
     --main-bg-color : #04030C;
     --code-blk-bg-color : #0f1216;
@@ -27,8 +30,7 @@ html , body {
     align-items: center;
 }
 #content {
-    min-width: 500px;
-    max-width: 950px;
+    width: 1000px;
 }
 
 
@@ -64,9 +66,8 @@ a {
 }
 
 .code-blk {
-    padding: 20px;
-    border-radius: 10px;
-    line-height: 1.5;
+    padding: 5px;
+    line-height: 3.5;
 } 
 .inline-code-blk {
     padding: 5px;
@@ -108,7 +109,7 @@ li {
 }
 
 p {
-    display: inline;
+    display: contents;
     line-height: 2;
 }
 
