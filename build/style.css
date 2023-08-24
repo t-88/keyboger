@@ -6,7 +6,6 @@
 
     --accent : #36CE91;
 } 
-
 html , body {
     background-color: var(--main-bg-color);
     color: var(--text-color);
@@ -18,6 +17,9 @@ html , body {
     min-width: 700px;
 
     font-family: monospace;
+
+    position: relative;
+
 }
 #blog {
     display: flex;
@@ -108,4 +110,60 @@ li {
 p {
     display: inline;
     line-height: 2;
+}
+
+
+#about {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: #18181850;
+
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+#about div {
+    width: 500px;
+    height: 500px;
+    background-color: var(--main-bg-color);
+    border-radius: 20px;
+
+    font-size: 25px;
+    padding: 50px;
+
+    position: relative;
+}
+#about button {
+    border: none;
+    outline: none;
+
+
+    background-color: var(--header-color);
+    color: var(--main-bg-color);
+
+    border-radius: 3px;
+    width: 70px;
+    height: 40px;
+    font-size: 23px;
+
+    cursor: pointer;
+
+
+    position: absolute;
+    bottom: 40px;
+    left: calc(50% - 35px);
+}
+#about button:hover {
+    background-color: var(--accent);
+}
+#about button:active {
+    height: 35px;
+    transform: translate(0,2.5px);
+    box-shadow: none;
 }
