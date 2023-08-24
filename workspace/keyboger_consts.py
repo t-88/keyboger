@@ -1,7 +1,7 @@
-BLOGS_DIR = "workspace/blogs/"
-BUILD_DIR = "workspace/build/"
-TEST_DIR = "workspace/build/test/"
-BUILD_BLOGS_DIR = "workspace/build/blogs/"
+BLOGS_DIR = "blogs/"
+BUILD_DIR = "build/"
+TEST_DIR = "build/test/"
+BUILD_BLOGS_DIR = "build/blogs/"
 
 MAIN_MENU_HEADER = "main_menu.bl"
 BLOGS_DB = "blogs_db.bl"
